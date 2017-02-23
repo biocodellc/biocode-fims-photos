@@ -1,0 +1,40 @@
+apply plugin: "java"
+apply plugin: "idea"
+
+targetCompatibility = 1.8
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+//noinspection GroovyAssignabilityCheck
+configurations {
+    server
+}
+
+idea {
+    module {
+        scopes.COMPILE.plus += [configurations.server]
+    }
+}
+
+//noinspection GroovyAssignabilityCheck
+sourceSets {
+    main {
+        compileClasspath += [configurations.server]
+    }
+    test {
+        compileClasspath += [configurations.server]
+        runtimeClasspath += [configurations.server]
+    }
+}
+
+dependencies {
+    server 'commons-lang:commons-lang:2.6'
+
+    compile project(":biocode-fims-commons")
+
+    testCompile "junit:junit-dep:4.10"
+    testCompile 'org.mockito:mockito-all:1.9.5'
+}

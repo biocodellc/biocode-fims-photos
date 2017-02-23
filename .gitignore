@@ -1,0 +1,11 @@
+.idea/*
+*.iml
+*.props
+*.properties
+dist/*
+build/*
+classes/*
+.gradle
+jetty-env.xml
+out/
+triples/
