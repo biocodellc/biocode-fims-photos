@@ -66,6 +66,10 @@ public class FimsPhotoFileManagerValidationTest {
         sheetMessages.addErrorMessage("Unique value constraint did not pass",
                 new SimpleMessage("\"originalPhotoUrl\" column is defined as unique but some values used more than once: http://ftp.myserver.com/photos/expedition/1"));
 
+        // compositeUniqueValue rule
+        sheetMessages.addErrorMessage("Unique value constraint did not pass",
+                new SimpleMessage("(\"eventId\", \"photoId\") is defined as a composite unique key, but some value combinations were used more than once: (\"eventId\": \"2\", \"photoId\": \"2.1\")"));
+
         // InvalidURL error rule
         sheetMessages.addErrorMessage("Invalid URL",
                 new SimpleMessage("notAUrl is not a valid URL for \"originalPhotoUrl\""));
