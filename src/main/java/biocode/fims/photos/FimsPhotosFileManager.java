@@ -1,9 +1,13 @@
 package biocode.fims.photos;
 
+import biocode.fims.bcid.ResourceTypes;
 import biocode.fims.digester.ChildEntity;
 import biocode.fims.digester.Entity;
 import biocode.fims.digester.Mapping;
 import biocode.fims.digester.Validation;
+import biocode.fims.entities.Bcid;
+import biocode.fims.entities.Expedition;
+import biocode.fims.entities.Resource;
 import biocode.fims.fileManagers.AuxilaryFileManager;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.reader.JsonTabularDataConverter;
@@ -11,14 +15,21 @@ import biocode.fims.reader.ReaderManager;
 import biocode.fims.reader.plugins.TabularDataReader;
 import biocode.fims.renderers.RowMessage;
 import biocode.fims.run.ProcessController;
+import biocode.fims.service.BcidService;
+import biocode.fims.service.ExpeditionService;
+import biocode.fims.settings.Hasher;
+import biocode.fims.settings.PathManager;
+import biocode.fims.settings.SettingsManager;
+import biocode.fims.utils.FileUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author rjewing
@@ -27,12 +38,37 @@ public class FimsPhotosFileManager implements AuxilaryFileManager {
     public static final String NAME = "photos";
     public static final String ENTITY_CONCEPT_ALIAS = "fimsPhotos";
 
+    private static final String DATASET_RESOURCE_SUB_TYPE = "fimsPhotos";
+
+    private FimsPhotosRepository repository;
+    private FimsPhotosQueueRepository queueRepository;
+    private BcidService bcidService;
+    private ExpeditionService expeditionService;
+    private SettingsManager settingsManager;
+
     private ProcessController processController;
     private ChildEntity entity;
     private Entity parentEntity;
     private String datasetFilename;
-    private FimsPhotosPersistenceManager persistenceManager;
+
+    private List<ObjectNode> updatePhotos;
+    private List<ObjectNode> createPhotos;
+    private Set<String> removePhotos;
+
     private ArrayNode fimsPhotoMetadata;
+
+    public FimsPhotosFileManager(FimsPhotosRepository repository, FimsPhotosQueueRepository queueRepository,
+                                 BcidService bcidService, ExpeditionService expeditionService, SettingsManager settingsManager) {
+
+        this.repository = repository;
+        this.queueRepository = queueRepository;
+        this.bcidService = bcidService;
+        this.expeditionService = expeditionService;
+        this.settingsManager = settingsManager;
+
+        updatePhotos = new ArrayList<>();
+        createPhotos = new ArrayList<>();
+    }
 
 
     @Override
@@ -41,7 +77,7 @@ public class FimsPhotosFileManager implements AuxilaryFileManager {
             throw new FimsRuntimeException("Server Error", "processController must not be null", 500);
         }
 
-        if (validateDataset()) {
+        if (haveDataset()) {
             updateStatus("\nRunning fims photos dataset validation.");
 
             String uniqueKey = parentEntity.getUniqueKey();
@@ -155,7 +191,7 @@ public class FimsPhotosFileManager implements AuxilaryFileManager {
         return true;
     }
 
-    private boolean validateDataset() {
+    private boolean haveDataset() {
         return datasetFilename != null;
     }
 
@@ -165,6 +201,106 @@ public class FimsPhotosFileManager implements AuxilaryFileManager {
 
     @Override
     public void upload(boolean newDataset) {
+        if (haveDataset()) {
+
+            addIdentifiersToPhotosDataset();
+            processPhotosDataset();
+            updateExistingPhotoResources();
+            queueRepository.addToQueue(createPhotos);
+
+            // save the spreadsheet on the server
+            File sourceFile = new File(datasetFilename);
+
+            String ext = FileUtils.getExtension(sourceFile.getName(), "xlx");
+            String filename = processController.getProjectId() + "_" + processController.getExpeditionCode() + "_fasta." + ext;
+            File outputFile = PathManager.createUniqueFile(filename, settingsManager.retrieveValue("serverRoot"));
+
+            Bcid bcid = new Bcid.BcidBuilder(ResourceTypes.DATASET_RESOURCE_TYPE)
+                    .ezidRequest(Boolean.parseBoolean(settingsManager.retrieveValue("ezidRequests")))
+                    .title("Fims Photo Metadata Dataset: " + processController.getExpeditionCode())
+                    .subResourceType(DATASET_RESOURCE_SUB_TYPE)
+                    .sourceFile(filename)
+                    .finalCopy(processController.getFinalCopy())
+                    .build();
+
+            bcidService.create(bcid, processController.getUserId());
+
+            Expedition expedition = expeditionService.getExpedition(
+                    processController.getExpeditionCode(),
+                    processController.getProjectId()
+            );
+
+            bcidService.attachBcidToExpedition(
+                    bcid,
+                    expedition.getExpeditionId()
+            );
+
+            updateStatus("Your Photo metadata has been submitted for uploading. Please allow 24hrs for you photos to appear." +
+                    "You will be notified of any errors that occur during processing of your photos.");
+        }
+
+    }
+
+    private void addIdentifiersToPhotosDataset() {
+        Bcid rootEntityBcid = expeditionService.getEntityBcid(
+                processController.getExpeditionCode(), processController.getProjectId(), entity.getConceptAlias());
+
+        if (rootEntityBcid == null) {
+            throw new FimsRuntimeException("Server Error", "rootEntityBcid is null", 500);
+        }
+
+        for (JsonNode node: fimsPhotoMetadata) {
+            ObjectNode resource = (ObjectNode) node;
+
+            String bcid = rootEntityBcid.getIdentifier() + getSuffix(resource);
+
+            resource.put("bcid", bcid);
+        }
+    }
+
+    private void updateExistingPhotoResources() {
+        repository.updateAndDelete(
+                updatePhotos,
+                removePhotos
+        );
+    }
+
+    private void processPhotosDataset() {
+        List<Resource> existingPhotoResources = repository.getFimsPhotos(
+                processController.getProjectId(),
+                processController.getExpeditionCode()
+        );
+
+        Map<String, Resource> existingResourceMap = existingPhotoResources.stream()
+                .collect(
+                        Collectors.toMap(
+                                Resource::getBcid,
+                                Function.identity()
+                        )
+                );
+
+        for (JsonNode node : fimsPhotoMetadata) {
+            ObjectNode photoNode = (ObjectNode) node;
+
+            String bcid = photoNode.get("bcid").asText();
+
+            // remove it here so we can delete what is left
+            if (existingResourceMap.remove(bcid) != null) {
+                updatePhotos.add(photoNode);
+            } else {
+                createPhotos.add(photoNode);
+            }
+        }
+
+        // anything left should be deleted as it is not in the latest dataset
+        removePhotos = existingResourceMap.keySet();
+    }
+
+    private String getSuffix(ObjectNode node) {
+        String localId = node.get(parentEntity.getUniqueKey()).asText() + node.get(entity.getUniqueKey()).asText();
+
+        Hasher hasher = new Hasher();
+        return hasher.hasherDigester(localId);
 
     }
 
