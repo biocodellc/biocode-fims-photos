@@ -43,6 +43,7 @@ dependencies {
     server 'commons-lang:commons-lang:2.6'
     server group: 'org.imgscalr', name: 'imgscalr-lib', version: '4.2'
     server group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.4'
+    server 'org.slf4j:slf4j-log4j12:1.7.19'
 
     compile project(":biocode-fims-commons")
 

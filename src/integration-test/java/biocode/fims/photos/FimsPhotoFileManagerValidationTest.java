@@ -6,6 +6,7 @@ import biocode.fims.photos.FimsPhotosFileManager;
 import biocode.fims.renderers.SheetMessages;
 import biocode.fims.renderers.SimpleMessage;
 import biocode.fims.run.ProcessController;
+import biocode.fims.settings.SettingsManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author rjewing
@@ -207,7 +210,7 @@ public class FimsPhotoFileManagerValidationTest {
 
         pc.setOutputFolder(System.getProperty("java.io.tmpdir"));
 
-        fm = new FimsPhotosFileManager();
+        fm = new FimsPhotosFileManager(null, null, null, null, null);
         try {
             fm.setFilename(datasetFile.getCanonicalPath());
         } catch (IOException e) {

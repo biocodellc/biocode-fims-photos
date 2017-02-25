@@ -25,8 +25,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,8 +41,9 @@ import java.util.stream.Collectors;
 public class FimsPhotosFileManager implements AuxilaryFileManager {
     public static final String NAME = "photos";
     public static final String ENTITY_CONCEPT_ALIAS = "fimsPhotos";
+    public static final String DATASET_RESOURCE_SUB_TYPE = "fimsPhotos";
 
-    private static final String DATASET_RESOURCE_SUB_TYPE = "fimsPhotos";
+    private static final Logger logger = LoggerFactory.getLogger(FimsPhotosFileManager.class);
 
     private FimsPhotosRepository repository;
     private FimsPhotosQueueRepository queueRepository;
@@ -203,40 +208,46 @@ public class FimsPhotosFileManager implements AuxilaryFileManager {
     public void upload(boolean newDataset) {
         if (haveDataset()) {
 
-            addIdentifiersToPhotosDataset();
-            processPhotosDataset();
-            updateExistingPhotoResources();
-            queueRepository.addToQueue(createPhotos);
+            try {
+                // save the spreadsheet on the server
+                File sourceFile = new File(datasetFilename);
 
-            // save the spreadsheet on the server
-            File sourceFile = new File(datasetFilename);
+                String ext = FileUtils.getExtension(sourceFile.getName(), "xlsx");
+                String filename = processController.getProjectId() + "_" + processController.getExpeditionCode() + "_photos." + ext;
+                File outputFile = PathManager.createUniqueFile(filename, settingsManager.retrieveValue("serverRoot"));
 
-            String ext = FileUtils.getExtension(sourceFile.getName(), "xlx");
-            String filename = processController.getProjectId() + "_" + processController.getExpeditionCode() + "_fasta." + ext;
-            File outputFile = PathManager.createUniqueFile(filename, settingsManager.retrieveValue("serverRoot"));
+                Files.copy(sourceFile.toPath(), outputFile.toPath());
 
-            Bcid bcid = new Bcid.BcidBuilder(ResourceTypes.DATASET_RESOURCE_TYPE)
-                    .ezidRequest(Boolean.parseBoolean(settingsManager.retrieveValue("ezidRequests")))
-                    .title("Fims Photo Metadata Dataset: " + processController.getExpeditionCode())
-                    .subResourceType(DATASET_RESOURCE_SUB_TYPE)
-                    .sourceFile(filename)
-                    .finalCopy(processController.getFinalCopy())
-                    .build();
+                addIdentifiersToPhotosDataset();
+                processPhotosDataset();
+                updateExistingPhotoResources();
+                queueRepository.addToQueue(createPhotos);
 
-            bcidService.create(bcid, processController.getUserId());
+                Bcid bcid = new Bcid.BcidBuilder(ResourceTypes.DATASET_RESOURCE_TYPE)
+                        .ezidRequest(Boolean.parseBoolean(settingsManager.retrieveValue("ezidRequests")))
+                        .title("Fims Photo Metadata Dataset: " + processController.getExpeditionCode())
+                        .subResourceType(DATASET_RESOURCE_SUB_TYPE)
+                        .sourceFile(filename)
+                        .finalCopy(processController.getFinalCopy())
+                        .build();
 
-            Expedition expedition = expeditionService.getExpedition(
-                    processController.getExpeditionCode(),
-                    processController.getProjectId()
-            );
+                bcidService.create(bcid, processController.getUserId());
 
-            bcidService.attachBcidToExpedition(
-                    bcid,
-                    expedition.getExpeditionId()
-            );
+                Expedition expedition = expeditionService.getExpedition(
+                        processController.getExpeditionCode(),
+                        processController.getProjectId()
+                );
 
-            updateStatus("Your Photo metadata has been submitted for uploading. Please allow 24hrs for you photos to appear." +
-                    "You will be notified of any errors that occur during processing of your photos.");
+                bcidService.attachBcidToExpedition(
+                        bcid,
+                        expedition.getExpeditionId()
+                );
+
+                updateStatus("Your Photo metadata has been submitted for uploading. Please allow 24hrs for you photos to appear." +
+                        "You will be notified of any errors that occur during processing of your photos.");
+            } catch (IOException e) {
+                logger.error("failed to save photo metadata dataset input file {}", datasetFilename);
+            }
         }
 
     }
