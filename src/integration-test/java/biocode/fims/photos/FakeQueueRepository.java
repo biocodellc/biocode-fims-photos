@@ -1,5 +1,7 @@
 package biocode.fims.photos;
 
+import biocode.fims.photos.queue.FimsPhotosQueueRepository;
+import biocode.fims.photos.queue.QueuedPhoto;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;
@@ -17,5 +19,10 @@ public class FakeQueueRepository implements FimsPhotosQueueRepository {
     @Override
     public void addToQueue(Collection<ObjectNode> values) {
         queue.addAll(values);
+    }
+
+    @Override
+    public Set<QueuedPhoto> getQueuedPhotos() {
+        return null;
     }
 }

@@ -20,8 +20,6 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author rjewing
