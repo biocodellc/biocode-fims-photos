@@ -1,19 +1,26 @@
 package biocode.fims.photos;
 
 import biocode.fims.models.records.GenericRecord;
-import biocode.fims.models.records.RecordMetadata;
 
 import java.util.Map;
 
-import static biocode.fims.photos.PhotoProps.ORIGINAL_URL;
-import static biocode.fims.photos.PhotoProps.PHOTO_ID;
+import static biocode.fims.photos.PhotoEntityProps.ORIGINAL_URL;
+import static biocode.fims.photos.PhotoEntityProps.PHOTO_ID;
 
 /**
  * @author rjewing
  */
 public class PhotoRecord extends GenericRecord {
 
-//    public PhotoRecord(String parentUniqueKeyUri, String identifier, RecordMetadata recordMetadata) {
+    public PhotoRecord() {
+        super();
+    }
+
+    public PhotoRecord(Map<String, String> properties) {
+        super(properties);
+    }
+
+    //    public PhotoRecord(String parentUniqueKeyUri, String identifier, RecordMetadata recordMetadata) {
 //        super();
 //        properties.put(SEQUENCE_URI, sequence);
 //        properties.put(parentUniqueKeyUri, identifier);

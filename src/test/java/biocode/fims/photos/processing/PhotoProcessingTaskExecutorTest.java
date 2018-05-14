@@ -1,7 +1,6 @@
 package biocode.fims.photos.processing;
 
-import biocode.fims.photos.PhotoProps;
-import biocode.fims.photos.PhotoRecord;
+import biocode.fims.photos.PhotoEntityProps;
 import org.junit.Test;
 
 import java.util.concurrent.*;
@@ -18,7 +17,7 @@ public class PhotoProcessingTaskExecutorTest {
     @Test
     public void duplicate_queuedPhotos_not_registered_with_executor_service() {
         ExecutorService executorService = mock(ExecutorService.class);
-        PhotoProcessingTaskExecutor executor = new PhotoProcessingTaskExecutor(executorService);
+        PhotoProcessingTaskExecutor executor = new PhotoProcessingTaskExecutor(null, executorService);
 
         PhotoProcessingTask processingTask = getPhotoProcessingTask();
 
@@ -29,9 +28,9 @@ public class PhotoProcessingTaskExecutorTest {
     }
 
     private PhotoProcessingTask getPhotoProcessingTask() {
-        PhotoRecord photo = new PhotoRecord();
-        photo.set(PhotoProps.PROCESSED.value(), "false");
-        photo.set(PhotoProps.PHOTO_ID.value(), "Photo1");
+        UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(null, null, 0, 0);
+        photo.set(PhotoEntityProps.PROCESSED.value(), "false");
+        photo.set(PhotoEntityProps.PHOTO_ID.value(), "Photo1");
         return new PhotoProcessingTask(null, photo);
     }
 

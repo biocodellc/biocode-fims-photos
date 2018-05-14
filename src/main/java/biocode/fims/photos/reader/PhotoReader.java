@@ -6,10 +6,10 @@ import biocode.fims.models.records.GenericRecordRowMapper;
 import biocode.fims.models.records.Record;
 import biocode.fims.models.records.RecordMetadata;
 import biocode.fims.models.records.RecordSet;
-import biocode.fims.photos.PhotoProps;
+import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.photos.application.config.PhotosSql;
-import biocode.fims.photos.digester.PhotoEntity;
+import biocode.fims.application.config.PhotosSql;
+import biocode.fims.digester.PhotoEntity;
 import biocode.fims.projectConfig.ProjectConfig;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataReader;
@@ -88,7 +88,7 @@ public class PhotoReader implements DataReader {
         for (Record r : recordSet.recordsToPersist()) {
             PhotoRecord record = (PhotoRecord) r;
 
-            record.set(PhotoProps.PROCESSED.value(), "false");
+            record.set(PhotoEntityProps.PROCESSED.value(), "false");
 
             existingRecords.stream()
                     .filter(er -> er.photoID().equals(record.photoID()) && er.get(parentKey).equals(record.get(parentKey)))
@@ -97,7 +97,7 @@ public class PhotoReader implements DataReader {
                         // if the originalUrl is the same, we don't need to process any longer
                         // TODO possibly need to persist more data?
                         if (er.originalUrl().equals(record.originalUrl())) {
-                            record.set(PhotoProps.PROCESSED.value(), "true");
+                            record.set(PhotoEntityProps.PROCESSED.value(), "true");
                         }
                     });
 

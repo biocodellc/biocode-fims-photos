@@ -11,8 +11,8 @@ import biocode.fims.validation.rules.RuleLevel;
 
 import java.util.Set;
 
-import static biocode.fims.photos.PhotoProps.ORIGINAL_URL;
-import static biocode.fims.photos.PhotoProps.PHOTO_ID;
+import static biocode.fims.photos.PhotoEntityProps.ORIGINAL_URL;
+import static biocode.fims.photos.PhotoEntityProps.PHOTO_ID;
 
 /**
  * @author rjewing

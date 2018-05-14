@@ -5,14 +5,18 @@ import biocode.fims.digester.EntityProps;
 /**
  * @author rjewing
  */
-public enum PhotoProps implements EntityProps {
+public enum PhotoEntityProps implements EntityProps {
     PHOTO_ID("photoID"),
     ORIGINAL_URL("originalUrl"),
-    PROCESSED("processed");
+    PROCESSED("processed"),
+    PROCESSING_ERROR("imageProcessingErrors"),
+    IMG_128("img128"),
+    IMG_512("img512"),
+    IMG_1024("img1024");
 
     private final String val;
 
-    PhotoProps(String val) {
+    PhotoEntityProps(String val) {
         this.val = val;
     }
 

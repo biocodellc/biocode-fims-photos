@@ -1,4 +1,4 @@
-package biocode.fims.photos.application.config;
+package biocode.fims.application.config;
 
 import org.springframework.util.Assert;
 

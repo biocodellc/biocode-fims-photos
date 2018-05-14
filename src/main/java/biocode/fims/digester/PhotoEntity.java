@@ -1,28 +1,37 @@
-package biocode.fims.photos.digester;
+package biocode.fims.digester;
 
-import biocode.fims.digester.PropEntity;
-import biocode.fims.photos.PhotoProps;
+import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import static biocode.fims.photos.PhotoProps.PHOTO_ID;
+import static biocode.fims.photos.PhotoEntityProps.PHOTO_ID;
 
 
 /**
  * @author rjewing
  */
 @JsonDeserialize(converter = PhotoEntity.PhotoEntitySanitizer.class)
-public class PhotoEntity extends PropEntity<PhotoProps> {
+public class PhotoEntity extends PropEntity<PhotoEntityProps> {
     private static final String CONCEPT_URI = "PhotoMetadata";
     public static final String TYPE = "Photo";
 
+    private String photosRoot;
+
 
     private PhotoEntity() { // needed for EntityTypeIdResolver
-        super();
+        super(PhotoEntityProps.class);
     }
 
     public PhotoEntity(String conceptAlias) {
-        super(PhotoProps.class, conceptAlias, CONCEPT_URI);
+        super(PhotoEntityProps.class, conceptAlias, CONCEPT_URI);
+    }
+
+    public String photosRoot() {
+        return photosRoot;
+    }
+
+    public void photosRoot(String photosRoot) {
+        this.photosRoot = photosRoot;
     }
 
     @Override
