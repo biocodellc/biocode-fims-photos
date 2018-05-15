@@ -3,7 +3,9 @@ package biocode.fims.application.config;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 
 /**
@@ -11,6 +13,7 @@ import org.springframework.core.io.ClassPathResource;
  */
 @Configuration
 @PropertySource(value = "classpath:biocode-fims-photos.props", ignoreResourceNotFound = true)
+@Import({PhotosProperties.class})
 public class PhotosAppConfig {
     @Bean
     public PhotosSql photosSql() {

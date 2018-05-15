@@ -5,19 +5,28 @@ import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.photos.ImageScaler;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.application.config.PhotosProperties;
+import biocode.fims.photos.PhotoRecord;
 import biocode.fims.settings.PathManager;
+import biocode.fims.utils.FileUtils;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ResponseProcessingException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author rjewing
  */
 public class BasicPhotoProcessor implements PhotoProcessor {
+    private final static Logger logger = LoggerFactory.getLogger(BasicPhotoProcessor.class);
+
     private final Client client;
     private final PhotosProperties props;
 
@@ -29,25 +38,33 @@ public class BasicPhotoProcessor implements PhotoProcessor {
     @Override
     public void process(UnprocessedPhotoRecord record) {
         try {
-            // TODO does this work with http & ftp urls?
-            // TODO allow specifying root location on PhotoEntity?
             BufferedImage orig = new FileRequest(client, record.originalUrl())
                     .execute();
 
             ImageScaler scaler = new ImageScaler(orig);
 
-            String name = record.projectId() + "_" + record.parentEntity().getConceptAlias() + "_" + record.entity().getConceptAlias() + "_" + record.projectId();
+            removeExistingImages(record);
 
-            String img_128 = this.resize(scaler, name, 128);
-            String img_512 = this.resize(scaler, name, 512);
-            String img_1024 = this.resize(scaler, name, 1024);
+            Path dir = Paths.get(props.photosDir(), String.valueOf(record.projectId()), record.parentEntity().getConceptAlias(), record.entity().getConceptAlias());
+            // make dirs if necessary
+            dir.toFile().mkdirs();
+
+            String formatName = FileUtils.getExtension(record.originalUrl(), "jpg");
+
+            String img_128 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 128);
+            String img_512 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 512);
+            String img_1024 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 1024);
 
             record.set(PhotoEntityProps.IMG_128.value(), img_128);
             record.set(PhotoEntityProps.IMG_512.value(), img_512);
             record.set(PhotoEntityProps.IMG_1024.value(), img_1024);
+            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), null);
 
-        } catch (WebApplicationException e) {
-            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), "[\"Failed to fetch originalUrl for processing.\"]");
+        } catch (ResponseProcessingException | WebApplicationException e) {
+            record.set(
+                    PhotoEntityProps.PROCESSING_ERROR.value(),
+                    "[\"Failed to fetch originalUrl for processing. Is the file accessible at \"" + record.originalUrl() + "\" and a valid image type?\"]"
+            );
             throw e;
         } catch (IOException e) {
             record.set(PhotoEntityProps.PROCESSING_ERROR.value(), "[\"Failed to process photo found at originalUrl.\"]");
@@ -57,10 +74,42 @@ public class BasicPhotoProcessor implements PhotoProcessor {
         }
     }
 
-    private String resize(ImageScaler scaler, String fileNamePrefix, int size) throws IOException {
-        File imgFile = PathManager.createUniqueFile(fileNamePrefix + "_" + size, props.photosDir());
+    /**
+     * attempt to remove any existing images if possible.
+     *
+     * @param record
+     */
+    private void removeExistingImages(PhotoRecord record) {
+        String img_128 = record.get(PhotoEntityProps.IMG_128.value());
+        if (!img_128.trim().equals("")) removeImg(img_128);
+
+        String img_512 = record.get(PhotoEntityProps.IMG_512.value());
+        if (!img_512.trim().equals("")) removeImg(img_512);
+
+        String img_1024 = record.get(PhotoEntityProps.IMG_1024.value());
+        if (!img_1024.trim().equals("")) removeImg(img_1024);
+    }
+
+    private void removeImg(String url) {
+        String[] split = url.split("/");
+        String name = split[split.length - 1];
+
+        File imgFile = new File(props.photosDir(), name);
+
+        if (imgFile.exists()) {
+            try {
+                imgFile.delete();
+            } catch (Exception e) {
+                logger.warn("Failed to delete img file: ", imgFile.getAbsolutePath());
+            }
+        }
+    }
+
+    private String resize(ImageScaler scaler, String dir, String fileNamePrefix, String formatName, int size) throws IOException {
+        File imgFile = PathManager.createUniqueFile(fileNamePrefix + "_" + size + "." + formatName, dir);
         BufferedImage img = scaler.scale(size);
-        ImageIO.write(img, "jpg", imgFile);
+        ImageIO.write(img, formatName, imgFile);
+
         return imgFile.getCanonicalPath();
     }
 

@@ -17,8 +17,11 @@ import biocode.fims.repositories.RecordRepository;
 import biocode.fims.utils.FileUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 import java.io.File;
+import java.sql.Types;
 import java.util.*;
 
 /**
@@ -122,24 +125,15 @@ public class PhotoReader implements DataReader {
         Map<String, String> tableMap = new HashMap<>();
         tableMap.put("table", PostgresUtils.entityTable(projectId, recordSet.entity().getConceptAlias()));
 
-        StringBuilder idList = new StringBuilder();
+        List<String[]> idList = new ArrayList<>();
 
         for (Record record : recordSet.recordsToPersist()) {
-            if (!idList.toString().isEmpty()) {
-                idList.append(", ");
-            }
-
-            idList
-                    .append("(")
-                    .append(record.get(parentKey))
-                    .append(", ")
-                    .append(((PhotoRecord) record).photoID())
-                    .append(")");
+            idList.add(new String[]{record.get(parentKey), ((PhotoRecord) record).photoID() });
         }
 
-        Map<String, String> p = new HashMap<>();
-        p.put("idList", idList.toString());
-        p.put("expeditionCode", expeditionCode);
+        MapSqlParameterSource p = new MapSqlParameterSource();
+        p.addValue("idList", idList);
+        p.addValue("expeditionCode", expeditionCode);
 
         RowMapper rowMapper = new GenericRecordRowMapper();
         return recordRepository.query(

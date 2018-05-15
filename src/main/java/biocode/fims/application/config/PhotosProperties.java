@@ -15,4 +15,8 @@ public class PhotosProperties {
     public String photosDir() {
         return env.getRequiredProperty("photosDir");
     }
+
+    public String photosRoot() {
+        return env.getRequiredProperty("photosRoot");
+    }
 }

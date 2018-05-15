@@ -37,16 +37,20 @@ public class PhotoProcessingTaskExecutor {
                             logger.error(err.getMessage(), err);
                         }
 
-                        // we still want to save if we have an error b/c we update
-                        // the record with an error message.
-                        UnprocessedPhotoRecord record = task.record();
-                        recordRepository.saveChildRecord(
-                                record,
-                                record.projectId(),
-                                record.parentEntity(),
-                                record.entity(),
-                                record.expeditionId()
-                        );
+                        try {
+                            // we still want to save if we have an error b/c we update
+                            // the record with an error message.
+                            UnprocessedPhotoRecord record = task.record();
+                            recordRepository.saveChildRecord(
+                                    record,
+                                    record.projectId(),
+                                    record.parentEntity(),
+                                    record.entity(),
+                                    record.expeditionId()
+                            );
+                        } catch (Exception e) {
+                            logger.error(e.getMessage(), e);
+                        }
 
                         // we sleep here for 2 seconds to reduce the chance of processing
                         // the same photo 2x. Unprocessed photos are queried every 10 mins,

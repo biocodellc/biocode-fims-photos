@@ -10,9 +10,7 @@ import biocode.fims.query.PostgresUtils;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.service.ProjectService;
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import javax.ws.rs.client.Client;
 import java.sql.SQLException;
@@ -23,9 +21,8 @@ import java.util.Map;
 /**
  * @author rjewing
  */
-@Component
 public class PhotoProcessingTaskScheduler {
-    private static final long TEN_MINS = 60 * 60 * 10 * 1000;
+    private static final long TEN_MINS = 1000 * 60 * 10;
 
     private final ProjectService projectService;
     private final RecordRepository recordRepository;
@@ -34,7 +31,6 @@ public class PhotoProcessingTaskScheduler {
     private final Client client;
     private final PhotosProperties props;
 
-    @Autowired
     public PhotoProcessingTaskScheduler(ProjectService projectService, RecordRepository recordRepository,
                                         PhotosSql photosSql, PhotoProcessingTaskExecutor processingTaskExecutor,
                                         Client client, PhotosProperties props) {
@@ -46,15 +42,14 @@ public class PhotoProcessingTaskScheduler {
         this.props = props;
     }
 
-//    @Scheduled(fixedDelay = TEN_MINS)
-    @Scheduled(fixedDelay = 60 * 60 * 1000)
+    @Scheduled(fixedDelay = TEN_MINS)
     public void scheduleTasks() {
         PhotoProcessor photoProcessor = new BasicPhotoProcessor(client, props);
         for (Project p : projectService.getProjects()) {
             for (Entity e : p.getProjectConfig().entities()) {
-                if (!(e instanceof PhotoEntity)) return;
+                if (!(e instanceof PhotoEntity)) continue;
 
-                Entity parentEntity = p.getProjectConfig().entity(e.getConceptAlias());
+                Entity parentEntity = p.getProjectConfig().entity(e.getParentEntity());
 
                 String sql = photosSql.unprocessedPhotos();
                 Map<String, String> tableMap = new HashMap<>();
@@ -62,7 +57,7 @@ public class PhotoProcessingTaskScheduler {
 
                 List<UnprocessedPhotoRecord> records = recordRepository.query(
                         StrSubstitutor.replace(sql, tableMap),
-                        new HashMap<>(),
+                        null,
                         (rs, rowNum) -> {
                             String data = rs.getString("data");
                             int expeditionId = rs.getInt("expedition_id");

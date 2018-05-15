@@ -2,10 +2,10 @@ getRecords: >
   SELECT r.data AS data
   FROM ${table} AS r
     INNER JOIN expeditions e on r.expedition_id = e.id
-  WHERE e.expedition_code = :expeditionCode AND (parent_identifier, local_identifier) IN (${idList})
+  WHERE e.expedition_code = :expeditionCode AND (parent_identifier, local_identifier) IN (:idList)
 
 unprocessedPhotos: >
   SELECT r.data AS data, r.expedition_id AS expedition_id
   FROM ${table} AS r
-  WHERE r.data->>'processed' = false
+  WHERE (r.data->>'processed')::boolean = false
 
