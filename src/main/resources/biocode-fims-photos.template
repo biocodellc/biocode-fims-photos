@@ -1,4 +1,2 @@
 # location on server to store photos
 photosDir=
-# url root used to fetch a photo
-photosRoot=
