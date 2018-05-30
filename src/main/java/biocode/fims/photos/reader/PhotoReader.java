@@ -9,8 +9,8 @@ import biocode.fims.models.records.RecordSet;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
 import biocode.fims.application.config.PhotosSql;
-import biocode.fims.digester.PhotoEntity;
 import biocode.fims.projectConfig.ProjectConfig;
+import biocode.fims.projectConfig.models.PhotoEntity;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataReader;
 import biocode.fims.repositories.RecordRepository;
@@ -18,10 +18,8 @@ import biocode.fims.utils.FileUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 import java.io.File;
-import java.sql.Types;
 import java.util.*;
 
 /**

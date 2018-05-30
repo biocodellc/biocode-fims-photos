@@ -1,4 +1,4 @@
-package biocode.fims.digester;
+package biocode.fims.projectConfig.models;
 
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;

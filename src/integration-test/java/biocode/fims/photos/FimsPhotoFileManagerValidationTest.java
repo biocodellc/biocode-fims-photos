@@ -1,7 +1,7 @@
 //package biocode.fims.photos;
 //
-//import biocode.fims.digester.Validation;
-//import biocode.fims.digester.Mapping;
+//import biocode.fims.projectConfig.models.Validation;
+//import biocode.fims.projectConfig.models.Mapping;
 //import biocode.fims.photos.FimsPhotosFileManager;
 //import biocode.fims.renderers.SheetMessages;
 //import biocode.fims.renderers.SimpleMessage;

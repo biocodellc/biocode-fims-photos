@@ -6,7 +6,7 @@ import biocode.fims.photos.ImageScaler;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.application.config.PhotosProperties;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.settings.PathManager;
+import biocode.fims.utils.FileUtils;
 import biocode.fims.utils.FileUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -106,7 +106,7 @@ public class BasicPhotoProcessor implements PhotoProcessor {
     }
 
     private String resize(ImageScaler scaler, String dir, String fileNamePrefix, String formatName, int size) throws IOException {
-        File imgFile = PathManager.createUniqueFile(fileNamePrefix + "_" + size + "." + formatName, dir);
+        File imgFile = FileUtils.createUniqueFile(fileNamePrefix + "_" + size + "." + formatName, dir);
         BufferedImage img = scaler.scale(size);
         ImageIO.write(img, formatName, imgFile);
 
