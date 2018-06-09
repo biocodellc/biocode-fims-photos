@@ -42,10 +42,7 @@ dependencies {
     server 'org.slf4j:slf4j-log4j12:1.7.19'
     server group: 'org.springframework', name: 'spring-context', version: '4.3.6.RELEASE'
     server 'org.springframework.data:spring-data-jpa:1.10.1.RELEASE'
-    server('org.glassfish.jersey.ext:jersey-spring3:2.25') {
-        exclude module: 'bean-validator'
-        exclude module: 'asm-all-repackaged'
-    }
+    server group: 'org.glassfish.jersey.ext', name: 'jersey-spring4', version: '2.27'
     server 'org.hibernate:hibernate-entitymanager:5.1.0.Final'
 
     compile composite.resolveDependency("org.biocode:biocode-fims-commons:${fimsCommonsVersion}", ":biocode-fims-commons")
