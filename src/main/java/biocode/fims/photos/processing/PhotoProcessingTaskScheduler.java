@@ -42,7 +42,7 @@ public class PhotoProcessingTaskScheduler {
         this.props = props;
     }
 
-    @Scheduled(fixedDelay = TEN_MINS)
+    @Scheduled(initialDelay = 60 * 1000, fixedDelay = TEN_MINS)
     public void scheduleTasks() {
         PhotoProcessor photoProcessor = new BasicPhotoProcessor(client, props);
         for (Project p : projectService.getProjects()) {

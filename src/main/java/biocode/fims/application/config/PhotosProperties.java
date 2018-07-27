@@ -13,6 +13,27 @@ public class PhotosProperties {
     }
 
     public String photosDir() {
-        return env.getRequiredProperty("photosDir");
+        String dir = env.getRequiredProperty("photosDir");
+        if (!dir.endsWith("/")) {
+            dir += "/";
+        }
+        return dir;
+    }
+
+    public String photosRoot() {
+        String base = env.getRequiredProperty("appRoot");
+        String path = env.getRequiredProperty("photosRoot");
+
+        if (!path.endsWith("/")) {
+            path += "/";
+        }
+
+        if (base.endsWith("/") && path.startsWith("/")) {
+            return base + path.replaceFirst("/", "");
+        } else if (!base.endsWith("/") && !path.startsWith("/")) {
+            return base + "/" + path;
+        } else {
+            return base + path;
+        }
     }
 }

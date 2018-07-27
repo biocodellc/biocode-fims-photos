@@ -7,7 +7,6 @@ import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.application.config.PhotosProperties;
 import biocode.fims.photos.PhotoRecord;
 import biocode.fims.utils.FileUtils;
-import biocode.fims.utils.FileUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -45,7 +44,7 @@ public class BasicPhotoProcessor implements PhotoProcessor {
 
             removeExistingImages(record);
 
-            Path dir = Paths.get(props.photosDir(), String.valueOf(record.projectId()), record.parentEntity().getConceptAlias(), record.entity().getConceptAlias());
+            Path dir = Paths.get(props.photosDir(), String.valueOf(record.projectId()), record.entity().getConceptAlias());
             // make dirs if necessary
             dir.toFile().mkdirs();
 
@@ -110,7 +109,7 @@ public class BasicPhotoProcessor implements PhotoProcessor {
         BufferedImage img = scaler.scale(size);
         ImageIO.write(img, formatName, imgFile);
 
-        return imgFile.getCanonicalPath();
+        return imgFile.getCanonicalPath().replace(Paths.get(props.photosDir()).toFile().getCanonicalPath() + "/", props.photosRoot());
     }
 
     private static final class FileRequest extends AbstractRequest<BufferedImage> {
