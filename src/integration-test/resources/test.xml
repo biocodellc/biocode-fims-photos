@@ -33,7 +33,7 @@
         <entity worksheet="Samples" uniqueKey="eventId" conceptAlias="Event">
             <attribute column="eventId" uri="urn:eventId" dataType="string" />
             <attribute column="principalInvestigator" uri="urn:principalInvestigator"
-                        defined_by="urn:PrincipalInvestigator" />
+                        definedBy="urn:PrincipalInvestigator" />
         </entity>
 
         <childEntity worksheet="Photos" conceptAlias="fimsPhotos" parentEntityConceptAlias="Event" uniqueKey="photoId">

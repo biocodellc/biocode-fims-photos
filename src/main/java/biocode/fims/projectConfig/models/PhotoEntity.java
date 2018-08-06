@@ -1,10 +1,10 @@
-package biocode.fims.digester;
+package biocode.fims.projectConfig.models;
 
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import static biocode.fims.photos.PhotoEntityProps.PHOTO_ID;
+import static biocode.fims.photos.PhotoEntityProps.*;
 
 
 /**
@@ -12,7 +12,7 @@ import static biocode.fims.photos.PhotoEntityProps.PHOTO_ID;
  */
 @JsonDeserialize(converter = PhotoEntity.PhotoEntitySanitizer.class)
 public class PhotoEntity extends PropEntity<PhotoEntityProps> {
-    private static final String CONCEPT_URI = "PhotoMetadata";
+    private static final String CONCEPT_URI = "http://rs.tdwg.org/dwc/terms/associatedMedia";
     public static final String TYPE = "Photo";
 
     private String photosRoot;
@@ -38,10 +38,10 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
     protected void init() {
         super.init();
 
-        // This is actually a composite unique_key. The actual key is
-        // parentEntityUniqueKey_photoEntityUniqueKey
         // TODO look into possibility of using photo hashing, but worried about false positives
         setUniqueKey(PHOTO_ID.value());
+        getAttribute(PROCESSED.value()).setInternal(true);
+        getAttribute(PROCESSING_ERROR.value()).setInternal(true);
         recordType = PhotoRecord.class;
 
         // note: default rules are set in the PhotoValidator

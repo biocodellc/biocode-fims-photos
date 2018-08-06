@@ -1,81 +1,55 @@
 package biocode.fims.photos.reader;
 
+import biocode.fims.application.config.PhotosSql;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.fimsExceptions.errorCodes.DataReaderCode;
+import biocode.fims.models.records.GenericRecord;
 import biocode.fims.models.records.GenericRecordRowMapper;
 import biocode.fims.models.records.Record;
-import biocode.fims.models.records.RecordMetadata;
 import biocode.fims.models.records.RecordSet;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.application.config.PhotosSql;
-import biocode.fims.digester.PhotoEntity;
 import biocode.fims.projectConfig.ProjectConfig;
 import biocode.fims.query.PostgresUtils;
-import biocode.fims.reader.DataReader;
+import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;
-import biocode.fims.utils.FileUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 import java.io.File;
-import java.sql.Types;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author rjewing
  */
-public class PhotoReader implements DataReader {
+public class PhotoConverter implements DataConverter {
     private final PhotosSql photosSql;
     private final RecordRepository recordRepository;
-    private final List<DataReader> tabularReaders;
     protected File file;
     protected ProjectConfig config;
-    private RecordMetadata recordMetadata;
 
-    public PhotoReader(PhotosSql photosSql, RecordRepository recordRepository, List<DataReader> tabularReaders) {
+    public PhotoConverter(PhotosSql photosSql, RecordRepository recordRepository) {
         this.photosSql = photosSql;
         this.recordRepository = recordRepository;
-        this.tabularReaders = tabularReaders;
     }
 
-    public PhotoReader(PhotosSql photosSql, RecordRepository recordRepository, List<DataReader> tabularReaders, File file, ProjectConfig projectConfig, RecordMetadata recordMetadata) {
-        this.photosSql = photosSql;
-        this.recordRepository = recordRepository;
-        this.tabularReaders = tabularReaders;
-        this.file = file;
+    public PhotoConverter(PhotosSql photosSql, RecordRepository recordRepository, ProjectConfig projectConfig) {
+        this(photosSql, recordRepository);
         this.config = projectConfig;
-        this.recordMetadata = recordMetadata;
     }
 
     @Override
-    public List<RecordSet> getRecordSets(int projectId, String expeditionCode) {
-        String ext = FileUtils.getExtension(file.getAbsolutePath(), "");
-        DataReader reader = getReader(ext);
+    public RecordSet convertRecordSet(RecordSet recordSet, int projectId, String expeditionCode) {
+        String parent = recordSet.entity().getParentEntity();
+        String parentKey = config.entity(parent).getUniqueKeyURI();
 
-        // this shouldn't happen as handlesExtension should be called first to say if
-        // this reader is appropriate
-        if (reader == null) throw new FimsRuntimeException(DataReaderCode.READ_ERROR, 500);
-
-        reader = reader.newInstance(file, config, recordMetadata);
-
-        List<RecordSet> recordSets = new ArrayList<>();
-
-        for (RecordSet recordSet : reader.getRecordSets(projectId, expeditionCode)) {
-            if (recordSet.entity() instanceof PhotoEntity) {
-                recordSets.add(recordSet);
-
-                String parent = recordSet.entity().getParentEntity();
-                String parentKey = config.entity(parent).getUniqueKeyURI();
-
-                List<PhotoRecord> existingRecords = getExistingRecords(recordSet, projectId, expeditionCode, parentKey);
-                updateRecords(recordSet, existingRecords, parentKey);
-            }
-        }
-
-        return recordSets;
+        List<PhotoRecord> existingRecords = getExistingRecords(recordSet, projectId, expeditionCode, parentKey);
+        updateRecords(recordSet, existingRecords, parentKey);
+        return recordSet;
     }
 
     /**
@@ -97,10 +71,12 @@ public class PhotoReader implements DataReader {
                     .filter(er -> er.photoID().equals(record.photoID()) && er.get(parentKey).equals(record.get(parentKey)))
                     .findFirst()
                     .ifPresent(er -> {
-                        // if the originalUrl is the same, we don't need to process any longer
+                        // if the originalUrl is the same copy a few existing props
                         // TODO possibly need to persist more data?
                         if (er.originalUrl().equals(record.originalUrl())) {
-                            record.set(PhotoEntityProps.PROCESSED.value(), "true");
+                            for (PhotoEntityProps p : PhotoEntityProps.values()) {
+                                record.set(p.value(), er.get(p.value()));
+                            }
                         }
                     });
 
@@ -128,39 +104,22 @@ public class PhotoReader implements DataReader {
         List<String[]> idList = new ArrayList<>();
 
         for (Record record : recordSet.recordsToPersist()) {
-            idList.add(new String[]{record.get(parentKey), ((PhotoRecord) record).photoID() });
+            idList.add(new String[]{record.get(parentKey), ((PhotoRecord) record).photoID()});
         }
 
         MapSqlParameterSource p = new MapSqlParameterSource();
         p.addValue("idList", idList);
         p.addValue("expeditionCode", expeditionCode);
 
-        RowMapper rowMapper = new GenericRecordRowMapper();
+        RowMapper<GenericRecord> rowMapper = new GenericRecordRowMapper();
         return recordRepository.query(
                 StrSubstitutor.replace(sql, tableMap),
                 p,
-                (rs, rowNum) -> (PhotoRecord) rowMapper.mapRow(rs, rowNum));
+                (rs, rowNum) -> new PhotoRecord(rowMapper.mapRow(rs, rowNum).properties()));
     }
 
     @Override
-    public boolean handlesExtension(String ext) {
-        return getReader(ext) != null;
-    }
-
-    private DataReader getReader(String ext) {
-        for (DataReader r : tabularReaders) {
-            if (r.handlesExtension(ext)) return r;
-        }
-        return null;
-    }
-
-    @Override
-    public DataReader newInstance(File file, ProjectConfig projectConfig, RecordMetadata recordMetadata) {
-        return new PhotoReader(photosSql, recordRepository, tabularReaders, file, projectConfig, recordMetadata);
-    }
-
-    @Override
-    public DataReaderType readerType() {
-        return PhotoDataReaderType.READER_TYPE;
+    public DataConverter newInstance(ProjectConfig projectConfig) {
+        return new PhotoConverter(photosSql, recordRepository, projectConfig);
     }
 }

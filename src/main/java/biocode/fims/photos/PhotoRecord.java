@@ -20,16 +20,6 @@ public class PhotoRecord extends GenericRecord {
         super(properties);
     }
 
-    //    public PhotoRecord(String parentUniqueKeyUri, String identifier, RecordMetadata recordMetadata) {
-//        super();
-//        properties.put(SEQUENCE_URI, sequence);
-//        properties.put(parentUniqueKeyUri, identifier);
-
-//        for (Map.Entry e : recordMetadata.metadata().entrySet()) {
-//            properties.put((String) e.getKey(), (String) e.getValue());
-//        }
-//    }
-
     public String originalUrl() {
         return properties.get(ORIGINAL_URL.value());
     }
