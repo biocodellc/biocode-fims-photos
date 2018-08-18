@@ -1,6 +1,6 @@
 package biocode.fims.photos;
 
-import biocode.fims.models.records.GenericRecord;
+import biocode.fims.records.GenericRecord;
 
 import java.util.Map;
 
