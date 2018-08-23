@@ -48,11 +48,13 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             // make dirs if necessary
             dir.toFile().mkdirs();
 
-            String formatName = FileUtils.getExtension(record.originalUrl(), "jpg");
+            // strip any query params from the url
+            String originalUrl = record.originalUrl().replaceFirst("\\?.*", "");
+            String formatName = FileUtils.getExtension(originalUrl, "jpg");
 
-            String img_128 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 128);
-            String img_512 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 512);
-            String img_1024 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 1024);
+            String img_128 = this.resize(scaler, dir.toString(), record.expeditionId() + "_" + record.photoID(), formatName, 128);
+            String img_512 = this.resize(scaler, dir.toString(), record.expeditionId() + "_" + record.photoID(), formatName, 512);
+            String img_1024 = this.resize(scaler, dir.toString(), record.expeditionId() + "_" + record.photoID(), formatName, 1024);
 
             record.set(PhotoEntityProps.IMG_128.value(), img_128);
             record.set(PhotoEntityProps.IMG_512.value(), img_512);

@@ -10,7 +10,7 @@ public enum PhotoEntityProps implements EntityProps {
     ORIGINAL_URL("originalUrl"),
     PROCESSED("processed"),
     PROCESSING_ERROR("imageProcessingErrors"),
-    IMG_128("img128"),
+    IMG_128("img64"),
     IMG_512("img512"),
     IMG_1024("img1024");
 
