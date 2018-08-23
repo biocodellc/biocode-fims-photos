@@ -15,23 +15,12 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
     private static final String CONCEPT_URI = "http://rs.tdwg.org/dwc/terms/associatedMedia";
     public static final String TYPE = "Photo";
 
-    private String photosRoot;
-
-
     private PhotoEntity() { // needed for EntityTypeIdResolver
         super(PhotoEntityProps.class);
     }
 
     public PhotoEntity(String conceptAlias) {
         super(PhotoEntityProps.class, conceptAlias, CONCEPT_URI);
-    }
-
-    public String photosRoot() {
-        return photosRoot;
-    }
-
-    public void photosRoot(String photosRoot) {
-        this.photosRoot = photosRoot;
     }
 
     @Override

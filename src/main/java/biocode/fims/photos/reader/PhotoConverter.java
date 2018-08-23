@@ -13,6 +13,7 @@ import biocode.fims.projectConfig.ProjectConfig;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;
+import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -32,6 +33,9 @@ public class PhotoConverter implements DataConverter {
     protected File file;
     protected ProjectConfig config;
 
+    private Map<MultiKey, PhotoRecord> existingRecords;
+    private String parentKey;
+
     public PhotoConverter(PhotosSql photosSql, RecordRepository recordRepository) {
         this.photosSql = photosSql;
         this.recordRepository = recordRepository;
@@ -45,10 +49,12 @@ public class PhotoConverter implements DataConverter {
     @Override
     public RecordSet convertRecordSet(RecordSet recordSet, int projectId, String expeditionCode) {
         String parent = recordSet.entity().getParentEntity();
-        String parentKey = config.entity(parent).getUniqueKeyURI();
+        parentKey = config.entity(parent).getUniqueKeyURI();
 
-        List<PhotoRecord> existingRecords = getExistingRecords(recordSet, projectId, expeditionCode, parentKey);
-        updateRecords(recordSet, existingRecords, parentKey);
+        existingRecords = new HashMap<>();
+        getExistingRecords(recordSet, projectId, expeditionCode, parentKey)
+                .forEach(r -> existingRecords.put(new MultiKey(r.get(parentKey), r.photoID()), r));
+        updateRecords(recordSet);
         return recordSet;
     }
 
@@ -58,27 +64,24 @@ public class PhotoConverter implements DataConverter {
      * This is necessary because we do additional processing on photos and need to preserve some data.
      *
      * @param recordSet
-     * @param existingRecords
-     * @param parentKey
      */
-    private void updateRecords(RecordSet recordSet, List<PhotoRecord> existingRecords, String parentKey) {
+    private void updateRecords(RecordSet recordSet) {
         for (Record r : recordSet.recordsToPersist()) {
             PhotoRecord record = (PhotoRecord) r;
 
             record.set(PhotoEntityProps.PROCESSED.value(), "false");
 
-            existingRecords.stream()
-                    .filter(er -> er.photoID().equals(record.photoID()) && er.get(parentKey).equals(record.get(parentKey)))
-                    .findFirst()
-                    .ifPresent(er -> {
-                        // if the originalUrl is the same copy a few existing props
-                        // TODO possibly need to persist more data?
-                        if (er.originalUrl().equals(record.originalUrl())) {
-                            for (PhotoEntityProps p : PhotoEntityProps.values()) {
-                                record.set(p.value(), er.get(p.value()));
-                            }
-                        }
-                    });
+            PhotoRecord existing = existingRecords.get(new MultiKey(record.get(parentKey), record.photoID()));
+
+            if (existing != null) {
+                // if the originalUrl is the same copy a few existing props
+                // TODO possibly need to persist more data?
+                if (existing.originalUrl().equals(record.originalUrl())) {
+                    for (PhotoEntityProps p : PhotoEntityProps.values()) {
+                        record.set(p.value(), existing.get(p.value()));
+                    }
+                }
+            }
 
         }
     }
