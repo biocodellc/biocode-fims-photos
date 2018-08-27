@@ -9,7 +9,7 @@ import biocode.fims.records.Record;
 import biocode.fims.records.RecordSet;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.projectConfig.ProjectConfig;
+import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;

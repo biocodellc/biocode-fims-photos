@@ -1,8 +1,8 @@
-package biocode.fims.projectConfig.models;
+package biocode.fims.config.project.models;
 
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.projectConfig.ProjectConfig;
+import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.validation.rules.RequiredValueRule;
 import biocode.fims.validation.rules.RuleLevel;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
