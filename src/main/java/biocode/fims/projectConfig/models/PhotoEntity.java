@@ -2,6 +2,9 @@ package biocode.fims.projectConfig.models;
 
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
+import biocode.fims.projectConfig.ProjectConfig;
+import biocode.fims.validation.rules.RequiredValueRule;
+import biocode.fims.validation.rules.RuleLevel;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import static biocode.fims.photos.PhotoEntityProps.*;
@@ -41,10 +44,20 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         return TYPE;
     }
 
+    @Override
+    public void addDefaultRules(ProjectConfig config) {
+        super.addDefaultRules(config);
+
+        RequiredValueRule requiredValueRule = getRule(RequiredValueRule.class, RuleLevel.ERROR);
+        requiredValueRule.addColumn(PHOTO_ID.value());
+        requiredValueRule.addColumn(ORIGINAL_URL.value());
+    }
+
     /**
      * class used to verify PhotoEntity data integrity after deserialization. This is necessary
      * so we don't overwrite the default values during deserialization.
      */
-    static class PhotoEntitySanitizer extends PropEntitySanitizer<PhotoEntity> {}
+    static class PhotoEntitySanitizer extends PropEntitySanitizer<PhotoEntity> {
+    }
 }
 

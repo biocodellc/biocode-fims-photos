@@ -23,17 +23,6 @@ public class PhotoValidator extends RecordValidator {
         super(config);
     }
 
-    @Override
-    protected void addDefaultRules(Set<Rule> rules, RecordSet recordSet) {
-        super.addDefaultRules(rules, recordSet);
-
-        Entity entity = recordSet.entity();
-
-        RequiredValueRule requiredValueRule = entity.getRule(RequiredValueRule.class, RuleLevel.ERROR);
-        requiredValueRule.addColumn(PHOTO_ID.value());
-        requiredValueRule.addColumn(ORIGINAL_URL.value());
-    }
-
     public static class PhotoValidatorInstantiator implements ValidatorInstantiator {
         @Override
         public RecordValidator newInstance(ProjectConfig config) {
