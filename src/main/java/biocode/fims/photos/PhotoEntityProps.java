@@ -1,6 +1,6 @@
 package biocode.fims.photos;
 
-import biocode.fims.config.project.models.EntityProps;
+import biocode.fims.config.models.EntityProps;
 
 /**
  * @author rjewing

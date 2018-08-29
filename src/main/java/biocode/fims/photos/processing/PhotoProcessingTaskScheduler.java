@@ -1,11 +1,11 @@
 package biocode.fims.photos.processing;
 
-import biocode.fims.config.project.models.Entity;
+import biocode.fims.config.models.Entity;
+import biocode.fims.config.models.PhotoEntity;
 import biocode.fims.models.Project;
 import biocode.fims.models.dataTypes.JacksonUtil;
 import biocode.fims.application.config.PhotosProperties;
 import biocode.fims.application.config.PhotosSql;
-import biocode.fims.config.project.models.PhotoEntity;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.service.ProjectService;

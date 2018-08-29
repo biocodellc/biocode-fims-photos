@@ -1,6 +1,7 @@
 package biocode.fims.photos.reader;
 
 import biocode.fims.application.config.PhotosSql;
+import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.fimsExceptions.errorCodes.DataReaderCode;
 import biocode.fims.records.GenericRecord;
@@ -9,7 +10,6 @@ import biocode.fims.records.Record;
 import biocode.fims.records.RecordSet;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;

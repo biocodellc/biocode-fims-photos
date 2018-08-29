@@ -1,11 +1,14 @@
-package biocode.fims.config.project.models;
+package biocode.fims.config.models;
 
+import biocode.fims.config.Config;
+import biocode.fims.config.models.PropEntity;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.validation.rules.RequiredValueRule;
 import biocode.fims.validation.rules.RuleLevel;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.util.LinkedHashSet;
 
 import static biocode.fims.photos.PhotoEntityProps.*;
 
@@ -45,10 +48,15 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
     }
 
     @Override
-    public void addDefaultRules(ProjectConfig config) {
+    public void addDefaultRules(Config config) {
         super.addDefaultRules(config);
-
         RequiredValueRule requiredValueRule = getRule(RequiredValueRule.class, RuleLevel.ERROR);
+
+        if (requiredValueRule == null) {
+            requiredValueRule = new RequiredValueRule(new LinkedHashSet<>(), RuleLevel.ERROR);
+            addRule(requiredValueRule);
+        }
+
         requiredValueRule.addColumn(PHOTO_ID.value());
         requiredValueRule.addColumn(ORIGINAL_URL.value());
     }

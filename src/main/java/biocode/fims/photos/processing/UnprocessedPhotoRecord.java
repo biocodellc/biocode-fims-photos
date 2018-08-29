@@ -1,6 +1,6 @@
 package biocode.fims.photos.processing;
 
-import biocode.fims.config.project.models.Entity;
+import biocode.fims.config.models.Entity;
 import biocode.fims.photos.PhotoRecord;
 
 import java.util.Map;
