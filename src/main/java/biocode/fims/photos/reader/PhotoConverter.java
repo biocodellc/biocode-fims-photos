@@ -4,6 +4,7 @@ import biocode.fims.application.config.PhotosSql;
 import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.fimsExceptions.errorCodes.DataReaderCode;
+import biocode.fims.models.Project;
 import biocode.fims.records.GenericRecord;
 import biocode.fims.records.GenericRecordRowMapper;
 import biocode.fims.records.Record;
@@ -47,12 +48,12 @@ public class PhotoConverter implements DataConverter {
     }
 
     @Override
-    public RecordSet convertRecordSet(RecordSet recordSet, int projectId, String expeditionCode) {
+    public RecordSet convertRecordSet(RecordSet recordSet, int networkId, String expeditionCode) {
         String parent = recordSet.entity().getParentEntity();
         parentKey = config.entity(parent).getUniqueKeyURI();
 
         existingRecords = new HashMap<>();
-        getExistingRecords(recordSet, projectId, expeditionCode, parentKey)
+        getExistingRecords(recordSet, networkId, expeditionCode, parentKey)
                 .forEach(r -> existingRecords.put(new MultiKey(r.get(parentKey), r.photoID()), r));
         updateRecords(recordSet);
         return recordSet;
@@ -90,19 +91,19 @@ public class PhotoConverter implements DataConverter {
      * fetch any existing records for that are in the given RecordSet
      *
      * @param recordSet
-     * @param projectId
+     * @param networkId
      * @param expeditionCode
      * @param parentKey
      * @return
      */
-    private List<PhotoRecord> getExistingRecords(RecordSet recordSet, int projectId, String expeditionCode, String parentKey) {
-        if (projectId == 0 || expeditionCode == null) {
+    private List<PhotoRecord> getExistingRecords(RecordSet recordSet, int networkId, String expeditionCode, String parentKey) {
+        if (networkId == 0 || expeditionCode == null) {
             throw new FimsRuntimeException(DataReaderCode.READ_ERROR, 500);
         }
 
         String sql = photosSql.getRecords();
         Map<String, String> tableMap = new HashMap<>();
-        tableMap.put("table", PostgresUtils.entityTable(projectId, recordSet.entity().getConceptAlias()));
+        tableMap.put("table", PostgresUtils.entityTable(networkId, recordSet.entity().getConceptAlias()));
 
         List<String[]> idList = new ArrayList<>();
 

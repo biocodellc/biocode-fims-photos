@@ -43,7 +43,7 @@ public class PhotoProcessingTaskExecutor {
                             UnprocessedPhotoRecord record = task.record();
                             recordRepository.saveChildRecord(
                                     record,
-                                    record.projectId(),
+                                    record.networkId(),
                                     record.parentEntity(),
                                     record.entity(),
                                     record.expeditionId()
