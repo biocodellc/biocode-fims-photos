@@ -2,13 +2,17 @@ package biocode.fims.config.models;
 
 import biocode.fims.config.Config;
 import biocode.fims.config.models.PropEntity;
+import biocode.fims.models.dataTypes.JacksonUtil;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
 import biocode.fims.validation.rules.RequiredValueRule;
+import biocode.fims.validation.rules.Rule;
 import biocode.fims.validation.rules.RuleLevel;
+import biocode.fims.validation.rules.Rules;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 
 import static biocode.fims.photos.PhotoEntityProps.*;
 
@@ -59,6 +63,32 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
 
         requiredValueRule.addColumn(PHOTO_ID.value());
         requiredValueRule.addColumn(ORIGINAL_URL.value());
+    }
+
+    @Override
+    public Entity clone() {
+        PhotoEntity entity = new PhotoEntity(getConceptAlias());
+
+        getRules().forEach(r -> {
+            // TODO create a Rule method clone()
+            // hacky way to make a copy of the rule
+            Rule newR = JacksonUtil.fromString(
+                    JacksonUtil.toString(r),
+                    r.getClass()
+            );
+            entity.addRule(newR);
+        });
+        getAttributes().forEach(a -> entity.addAttribute(a.clone()));
+
+        entity.setParentEntity(getParentEntity());
+        entity.recordType = recordType;
+
+        entity.setWorksheet(getWorksheet());
+        entity.setUniqueKey(getUniqueKey());
+        entity.setUniqueAcrossProject(getUniqueAcrossProject());
+        entity.setHashed(isHashed());
+
+        return entity;
     }
 
     /**
