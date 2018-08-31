@@ -3,6 +3,8 @@ package biocode.fims.photos.processing;
 import biocode.fims.photos.PhotoEntityProps;
 import org.junit.Test;
 
+import java.util.HashMap;
+
 import static org.junit.Assert.*;
 
 /**
@@ -25,7 +27,7 @@ public class PhotoProcessingTaskTest {
     }
 
     private UnprocessedPhotoRecord getPhotoRecord() {
-        UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(null, null, 0, 0);
+        UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(new HashMap<>(), null,null, 0, 0, null);
         photo.set(PhotoEntityProps.PROCESSED.value(), "false");
         photo.set(PhotoEntityProps.PHOTO_ID.value(), "Photo1");
         photo.set(PhotoEntityProps.ORIGINAL_URL.value(), "ftp:///photo/location");

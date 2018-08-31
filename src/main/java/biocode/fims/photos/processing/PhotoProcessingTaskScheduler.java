@@ -60,12 +60,13 @@ public class PhotoProcessingTaskScheduler {
                         null,
                         (rs, rowNum) -> {
                             String data = rs.getString("data");
-                            int expeditionId = rs.getInt("expedition_id");
+                            String expeditionCode = rs.getString("expeditionCode");
+                            int projectId = rs.getInt("projectId");
 
                             try {
                                 @SuppressWarnings("unchecked")
                                 Map<String, String> properties = JacksonUtil.fromString(data, HashMap.class);
-                                return new UnprocessedPhotoRecord(properties, parentEntity, e, n.getId(), expeditionId);
+                                return new UnprocessedPhotoRecord(properties, parentEntity, e, n.getId(), projectId, expeditionCode);
                             } catch (Exception ex) {
                                 throw new SQLException(ex);
                             }

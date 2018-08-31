@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.concurrent.*;
 
 import static org.mockito.Mockito.*;
@@ -41,7 +42,7 @@ public class PhotoProcessingTaskExecutorTest {
     }
 
     private PhotoProcessingTask getPhotoProcessingTask() {
-        UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(null, null, 0, 0);
+        UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(new HashMap<>(), null,null, 0, 0, null);
         photo.set(PhotoEntityProps.PROCESSED.value(), "false");
         photo.set(PhotoEntityProps.PHOTO_ID.value(), "Photo1");
         return new PhotoProcessingTask(null, photo);

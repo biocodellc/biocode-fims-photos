@@ -4,7 +4,6 @@ import biocode.fims.application.config.PhotosSql;
 import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.fimsExceptions.errorCodes.DataReaderCode;
-import biocode.fims.models.Project;
 import biocode.fims.records.GenericRecord;
 import biocode.fims.records.GenericRecordRowMapper;
 import biocode.fims.records.Record;
@@ -48,12 +47,12 @@ public class PhotoConverter implements DataConverter {
     }
 
     @Override
-    public RecordSet convertRecordSet(RecordSet recordSet, int networkId, String expeditionCode) {
+    public RecordSet convertRecordSet(RecordSet recordSet, int networkId) {
         String parent = recordSet.entity().getParentEntity();
         parentKey = config.entity(parent).getUniqueKeyURI();
 
         existingRecords = new HashMap<>();
-        getExistingRecords(recordSet, networkId, expeditionCode, parentKey)
+        getExistingRecords(recordSet, networkId, parentKey)
                 .forEach(r -> existingRecords.put(new MultiKey(r.get(parentKey), r.photoID()), r));
         updateRecords(recordSet);
         return recordSet;
@@ -68,6 +67,7 @@ public class PhotoConverter implements DataConverter {
      */
     private void updateRecords(RecordSet recordSet) {
         for (Record r : recordSet.recordsToPersist()) {
+            // TODO is the Record type correctly updated? I doubt it
             PhotoRecord record = (PhotoRecord) r;
 
             record.set(PhotoEntityProps.PROCESSED.value(), "false");
@@ -92,12 +92,11 @@ public class PhotoConverter implements DataConverter {
      *
      * @param recordSet
      * @param networkId
-     * @param expeditionCode
      * @param parentKey
      * @return
      */
-    private List<PhotoRecord> getExistingRecords(RecordSet recordSet, int networkId, String expeditionCode, String parentKey) {
-        if (networkId == 0 || expeditionCode == null) {
+    private List<PhotoRecord> getExistingRecords(RecordSet recordSet, int networkId, String parentKey) {
+        if (networkId == 0 || recordSet.expeditionCode() == null) {
             throw new FimsRuntimeException(DataReaderCode.READ_ERROR, 500);
         }
 
@@ -113,7 +112,7 @@ public class PhotoConverter implements DataConverter {
 
         MapSqlParameterSource p = new MapSqlParameterSource();
         p.addValue("idList", idList);
-        p.addValue("expeditionCode", expeditionCode);
+        p.addValue("expeditionCode", recordSet.expeditionCode());
 
         RowMapper<GenericRecord> rowMapper = new GenericRecordRowMapper();
         return recordRepository.query(

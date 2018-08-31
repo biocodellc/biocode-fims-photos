@@ -45,8 +45,7 @@ public class PhotoProcessingTaskExecutor {
                                     record,
                                     record.networkId(),
                                     record.parentEntity(),
-                                    record.entity(),
-                                    record.expeditionId()
+                                    record.entity()
                             );
                         } catch (Exception e) {
                             logger.error(e.getMessage(), e);
