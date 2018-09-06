@@ -8,9 +8,10 @@ import biocode.fims.config.models.EntityProps;
 public enum PhotoEntityProps implements EntityProps {
     PHOTO_ID("photoID"),
     ORIGINAL_URL("originalUrl"),
+    BULK_LOAD("bulkLoad"),
     PROCESSED("processed"),
     PROCESSING_ERROR("imageProcessingErrors"),
-    IMG_128("img64"),
+    IMG_128("img64"), // TODO what should this be?
     IMG_512("img512"),
     IMG_1024("img1024");
 

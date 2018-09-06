@@ -67,7 +67,6 @@ public class PhotoConverter implements DataConverter {
      */
     private void updateRecords(RecordSet recordSet) {
         for (Record r : recordSet.recordsToPersist()) {
-            // TODO is the Record type correctly updated? I doubt it
             PhotoRecord record = (PhotoRecord) r;
 
             record.set(PhotoEntityProps.PROCESSED.value(), "false");

@@ -41,6 +41,7 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         setUniqueKey(PHOTO_ID.value());
         getAttribute(PROCESSED.value()).setInternal(true);
         getAttribute(PROCESSING_ERROR.value()).setInternal(true);
+        getAttribute(BULK_LOAD.value()).setInternal(true);
         recordType = PhotoRecord.class;
 
         // note: default rules are set in the PhotoValidator

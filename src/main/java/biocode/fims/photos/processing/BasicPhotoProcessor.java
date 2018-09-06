@@ -37,8 +37,14 @@ public class BasicPhotoProcessor implements PhotoProcessor {
     @Override
     public void process(UnprocessedPhotoRecord record) {
         try {
-            BufferedImage orig = new FileRequest(client, record.originalUrl())
-                    .execute();
+            BufferedImage orig;
+
+            if (record.bulkLoad()) {
+                orig = ImageIO.read(new File(record.originalUrl()));
+            } else {
+                orig = new FileRequest(client, record.originalUrl())
+                        .execute();
+            }
 
             ImageScaler scaler = new ImageScaler(orig);
 
@@ -56,6 +62,16 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             String img_512 = this.resize(scaler, dir.toString(), record.expeditionCode() + "_" + record.photoID(), formatName, 512);
             String img_1024 = this.resize(scaler, dir.toString(), record.expeditionCode() + "_" + record.photoID(), formatName, 1024);
 
+            if (record.bulkLoad()) {
+                record.set(PhotoEntityProps.ORIGINAL_URL.value(), null);
+                try {
+                    File img = new File(record.originalUrl());
+                    img.delete();
+                } catch (Exception e) {
+                    logger.debug("Failed to delete bulk loaded img file", e);
+                }
+            }
+
             record.set(PhotoEntityProps.IMG_128.value(), img_128);
             record.set(PhotoEntityProps.IMG_512.value(), img_512);
             record.set(PhotoEntityProps.IMG_1024.value(), img_1024);
@@ -68,7 +84,21 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             );
             throw e;
         } catch (IOException e) {
-            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), "[\"Failed to process photo found at originalUrl.\"]");
+            String msg;
+            if (record.bulkLoad()) {
+                msg = "[\"Failed to process photo from bulk load. Image may be corrupt\"]";
+
+                try {
+                    File img = new File(record.originalUrl());
+                    img.delete();
+                } catch (Exception exp) {
+                    logger.debug("Failed to delete bulk loaded img file", exp);
+                }
+            } else {
+                msg = "[\"Failed to process photo found at originalUrl.\"]";
+            }
+
+            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), msg);
             throw new FimsRuntimeException(500, e);
         } finally {
             record.set(PhotoEntityProps.PROCESSED.value(), "true");
