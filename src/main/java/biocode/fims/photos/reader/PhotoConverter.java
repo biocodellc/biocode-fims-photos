@@ -19,10 +19,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author rjewing
@@ -76,7 +73,7 @@ public class PhotoConverter implements DataConverter {
             if (existing != null) {
                 // if the originalUrl is the same copy a few existing props
                 // TODO possibly need to persist more data?
-                if (existing.originalUrl().equals(record.originalUrl())) {
+                if (Objects.equals(record.originalUrl(), existing.originalUrl())) {
                     for (PhotoEntityProps p : PhotoEntityProps.values()) {
                         record.set(p.value(), existing.get(p.value()));
                     }
