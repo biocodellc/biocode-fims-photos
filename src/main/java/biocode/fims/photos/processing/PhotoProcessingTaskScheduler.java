@@ -47,7 +47,7 @@ public class PhotoProcessingTaskScheduler {
         PhotoProcessor photoProcessor = new BasicPhotoProcessor(client, props);
         for (Network n: networkService.getNetworks()) {
             for (Entity e : n.getNetworkConfig().entities()) {
-                if (!(e instanceof PhotoEntity)) continue;
+                if (!(e.type().equals(PhotoEntity.TYPE))) continue;
 
                 Entity parentEntity = n.getNetworkConfig().entity(e.getParentEntity());
 
