@@ -1,6 +1,7 @@
 package biocode.fims.photos;
 
 import biocode.fims.config.models.Entity;
+import biocode.fims.config.models.PhotoEntity;
 import biocode.fims.fimsExceptions.BadRequestException;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.fimsExceptions.ServerErrorException;
@@ -17,7 +18,6 @@ import com.opencsv.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,8 +31,9 @@ import java.util.zip.ZipInputStream;
  * @author rjewing
  */
 public class BulkPhotoPackage {
-    public final static String BULK_PHOTO_DIR = "bulk";
-    public final static String METADATA_FILE_NAME = "metadata.csv";
+    private final static String BULK_PHOTO_DIR = "bulk";
+    private final static String METADATA_FILE_NAME = "metadata.csv";
+    private final static String METADATA_FILE_NAME_COL = "fileName";
 
     private final static Logger logger = LoggerFactory.getLogger(Builder.class);
     // file pattern is parent_identifier+photoID.ext
@@ -49,6 +50,7 @@ public class BulkPhotoPackage {
     private final String photosDir;
 
     private Map<String, String> parentExpeditionCodes;
+    private Map<String, List<File>> files;
 
     private BulkPhotoPackage(Builder builder) {
         this.photosDir = builder.photosDir;
@@ -60,27 +62,20 @@ public class BulkPhotoPackage {
         this.parentEntity = project.getProjectConfig().entity(entity.getParentEntity());
         this.recordRepository = builder.recordRepository;
         this.invalidFiles = new ArrayList<>();
+        this.files = new HashMap<>();
+
     }
 
     public File metadataFile() {
-        Map<String, List<File>> files = extractFiles();
+        extractFiles();
 
         if (files.isEmpty()) {
             throw new FimsRuntimeException(ValidationCode.EMPTY_DATASET, 400);
         }
 
-        File metadataFile = files.containsKey(METADATA_FILE_NAME)
-                ? files.get(METADATA_FILE_NAME).get(0)
-                : null;
-
-        if (metadataFile == null) {
-            metadataFile = generateMetadataFile(files);
-//        } else if (expeditionCode == null && parentEntity.getUniqueAcrossProject()) {
-        } else {
-            metadataFile = updateMetadataFile(metadataFile);
-        }
-
-        return metadataFile;
+        return files.containsKey(METADATA_FILE_NAME)
+                ? updateMetadataFile(files.get(METADATA_FILE_NAME).get(0))
+                : generateMetadataFile();
     }
 
     public Project project() {
@@ -123,32 +118,51 @@ public class BulkPhotoPackage {
 
             List<String> metadataColumns = Arrays.asList(metadata.remove(0));
 
-            // TODO need to update metadata.csv column fileName adding the originalUrl column using the file map
-//            if (expeditionCode == null && parentEntity.getUniqueAcrossProject())
             int expeditionCol = metadataColumns.indexOf(Record.EXPEDITION_CODE);
-
-            // if we have an expeditionCode column, we're good to go
-            if (expeditionCol > -1) {
-                return metadataFile;
-            }
-
+            // if missing parent identifier column, we can't set the expedition
             int parentIdentifierCol = metadataColumns.indexOf(parentEntity.getUniqueKey());
 
-            // missing parent identifier column, nothing we can do
-            if (parentIdentifierCol == -1) {
-                return metadataFile;
+            boolean setExpedition = expeditionCol == -1 &&
+                    parentIdentifierCol > -1 &&
+                    expeditionCode == null &&
+                    parentEntity.getUniqueAcrossProject();
+
+            int fileNameCol = metadataColumns.indexOf(METADATA_FILE_NAME_COL);
+
+            // missing fileName column, nothing we can do
+            if (fileNameCol == -1) {
+                throw new FimsRuntimeException(ValidationCode.INVALID_DATASET, 400, METADATA_FILE_NAME + " is missing a fileName column");
+            }
+
+            int originalUrlCol = metadataColumns.indexOf(PhotoEntityProps.ORIGINAL_URL.value());
+            if (originalUrlCol == -1) {
+                originalUrlCol = metadataColumns.size();
+                metadataColumns.add(PhotoEntityProps.ORIGINAL_URL.value());
             }
 
             List<String[]> data = new ArrayList<>();
 
-            expeditionCol = metadataColumns.size();
-            metadataColumns.add(Record.EXPEDITION_CODE);
+            if (setExpedition) {
+                expeditionCol = metadataColumns.size();
+                metadataColumns.add(Record.EXPEDITION_CODE);
+            }
 
             data.add((String[]) metadataColumns.toArray());
 
             for (String[] row : metadata) {
-                row = Arrays.copyOf(row, metadataColumns.size());
-                row[expeditionCol] = getExpeditionCode(row[parentIdentifierCol]);
+                if (setExpedition) {
+                    row = Arrays.copyOf(row, metadataColumns.size());
+                    row[expeditionCol] = getExpeditionCode(row[parentIdentifierCol]);
+                }
+                String fileName = row[fileNameCol];
+                if (this.files.containsKey(fileName)) {
+                    List<File> files = this.files.get(fileName);
+                    if (files.size() > 1) {
+                        row[originalUrlCol] = files.remove(0).getAbsolutePath();
+                    } else {
+                        row[originalUrlCol] = files.get(0).getAbsolutePath();
+                    }
+                }
                 data.add(row);
             }
 
@@ -161,7 +175,7 @@ public class BulkPhotoPackage {
         }
     }
 
-    private File generateMetadataFile(Map<String, List<File>> files) {
+    private File generateMetadataFile() {
         List<String[]> data = new ArrayList<>();
 
         data.add(new String[]{
@@ -190,7 +204,7 @@ public class BulkPhotoPackage {
             } else {
                 invalidFiles.add(entry.getKey());
 
-                for (File img: entry.getValue()) {
+                for (File img : entry.getValue()) {
                     try {
                         img.delete();
                     } catch (Exception exp) {
@@ -241,9 +255,7 @@ public class BulkPhotoPackage {
                 .forEach(r -> parentExpeditionCodes.put(r.get(parentEntity.getUniqueKeyURI()), r.expeditionCode()));
     }
 
-    private Map<String, List<File>> extractFiles() {
-        Map<String, List<File>> files = new HashMap<>();
-
+    private void extractFiles() {
         Path rootDir = Paths.get(photosDir, BULK_PHOTO_DIR);
         // make rootDir if necessary
         rootDir.toFile().mkdir();
@@ -266,7 +278,7 @@ public class BulkPhotoPackage {
                 String ext = FileUtils.getExtension(fileName, "");
 
                 // ignore nested directories & unsupported file extensions
-                if (ze.isDirectory() || !fileSuffixes.contains(ext.toLowerCase())) {
+                if (ze.isDirectory() || fileName.split(File.separator).length > 1 || !fileSuffixes.contains(ext.toLowerCase())) {
                     logger.info("ignoring dir/unsupported file: " + ze.getName());
                     invalidFiles.add(ze.getName());
 
@@ -307,8 +319,6 @@ public class BulkPhotoPackage {
             throw new BadRequestException("invalid/corrupt zip file", e);
 
         }
-
-        return files;
     }
 
     public static class Builder {

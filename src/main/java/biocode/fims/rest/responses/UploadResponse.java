@@ -23,7 +23,7 @@ public class UploadResponse {
         return success;
     }
 
-    public EntityMessages getMessage() {
+    public EntityMessages getMessages() {
         return messages;
     }
 }

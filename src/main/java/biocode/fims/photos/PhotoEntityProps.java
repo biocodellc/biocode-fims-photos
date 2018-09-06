@@ -11,7 +11,7 @@ public enum PhotoEntityProps implements EntityProps {
     BULK_LOAD("bulkLoad"),
     PROCESSED("processed"),
     PROCESSING_ERROR("imageProcessingErrors"),
-    IMG_128("img64"), // TODO what should this be?
+    IMG_128("img128"),
     IMG_512("img512"),
     IMG_1024("img1024");
 

@@ -24,6 +24,7 @@ import biocode.fims.utils.StringGenerator;
 import biocode.fims.validation.messages.EntityMessages;
 import biocode.fims.validation.messages.Message;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,10 +68,10 @@ public class PhotosResource extends FimsController {
 
     }
 
-    private static Map<MultiKey, UploadEntry> resumeableUploads;
+    private static Map<MultiKey, UploadEntry> resumableUploads;
 
     static {
-        resumeableUploads = new ConcurrentHashMap<>();
+        resumableUploads = new ConcurrentHashMap<>();
     }
 
     @Autowired
@@ -139,10 +140,10 @@ public class PhotosResource extends FimsController {
 
         UploadEntry uploadEntry = null;
         if (UploadType.RESUME.equals(uploadType)) {
-            uploadEntry = resumeableUploads.get(key);
+            uploadEntry = resumableUploads.get(key);
 
             if (uploadEntry == null) {
-                throw new BadRequestException("Failed to an upload to resume. Please try again with a new upload.");
+                throw new BadRequestException("Failed to resume upload. Please try again with a new upload.");
             }
         } else if (UploadType.RESUMABLE.equals(uploadType)) {
             String tempDir = System.getProperty("java.io.tmpdir");
@@ -153,7 +154,7 @@ public class PhotosResource extends FimsController {
             uploadEntry.projectId = projectId;
             uploadEntry.expeditionCode = expeditionCode;
 
-            resumeableUploads.put(key, uploadEntry);
+            resumableUploads.put(key, uploadEntry);
         }
 
 
@@ -192,7 +193,10 @@ public class PhotosResource extends FimsController {
                     .build();
 
             // if we are here, we've successfully received the entire file
-            return photoLoader.process(photoPackage);
+            UploadResponse uploadResponse = photoLoader.process(photoPackage);
+
+            resumableUploads.remove(key);
+            return uploadResponse;
         } finally {
             is.close();
         }
@@ -207,7 +211,7 @@ public class PhotosResource extends FimsController {
         User user = userContext.getUser();
 
         MultiKey key = getKey(user, projectId, expeditionCode, conceptAlias);
-        UploadEntry uploadEntry = resumeableUploads.get(key);
+        UploadEntry uploadEntry = resumableUploads.get(key);
 
         if (uploadEntry == null) {
             throw new BadRequestException("Failed to find existing upload for the provided params");
@@ -221,13 +225,13 @@ public class PhotosResource extends FimsController {
 
         ZonedDateTime expiredTime = ZonedDateTime.now(ZoneOffset.UTC).minusHours(24);
 
-        for (Map.Entry<MultiKey, UploadEntry> e : resumeableUploads.entrySet()) {
+        for (Map.Entry<MultiKey, UploadEntry> e : resumableUploads.entrySet()) {
             if (e.getValue().lastUpdated.isBefore(expiredTime)) {
                 keysToRemove.add(e.getKey());
             }
         }
 
-        keysToRemove.forEach(k -> resumeableUploads.remove(k));
+        keysToRemove.forEach(k -> resumableUploads.remove(k));
     }
 
     private MultiKey getKey(User user, int projectId, String expeditionCode, String conceptAlias) {
@@ -236,6 +240,7 @@ public class PhotosResource extends FimsController {
 
     @JsonIgnoreProperties({"projectId", "expeditionCode", "lastUpdated", "targetFile"})
     private class UploadEntry {
+        @JsonProperty
         int size;
         int projectId;
         String expeditionCode;
