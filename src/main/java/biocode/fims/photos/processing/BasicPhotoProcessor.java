@@ -63,13 +63,13 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             String img_1024 = this.resize(scaler, dir.toString(), record.expeditionCode() + "_" + record.photoID(), formatName, 1024);
 
             if (record.bulkLoad()) {
-                record.set(PhotoEntityProps.ORIGINAL_URL.value(), null);
                 try {
                     File img = new File(record.originalUrl());
                     img.delete();
                 } catch (Exception e) {
                     logger.debug("Failed to delete bulk loaded img file", e);
                 }
+                record.set(PhotoEntityProps.ORIGINAL_URL.value(), null);
             }
 
             record.set(PhotoEntityProps.IMG_128.value(), img_128);
