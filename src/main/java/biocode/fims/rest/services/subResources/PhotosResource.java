@@ -26,7 +26,8 @@ import biocode.fims.validation.messages.Message;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.keyvalue.MultiKey;
-import org.apache.commons.fileupload.FileUploadException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -47,7 +48,7 @@ import java.util.zip.ZipInputStream;
 @Controller
 @Produces(MediaType.APPLICATION_JSON)
 public class PhotosResource extends FimsController {
-
+    private final static Logger logger = LoggerFactory.getLogger(PhotosResource.class);
 
     private final ProjectService projectService;
     private final ExpeditionService expeditionService;
@@ -95,7 +96,7 @@ public class PhotosResource extends FimsController {
                                      @QueryParam("expeditionCode") String expeditionCode,
                                      @QueryParam("type") UploadType uploadType,
                                      @PathParam("entity") String conceptAlias,
-                                     InputStream is) throws IOException, FileUploadException {
+                                     InputStream is) {
         clearExpiredUploadEntries();
 
         User user = userContext.getUser();
@@ -197,8 +198,16 @@ public class PhotosResource extends FimsController {
 
             resumableUploads.remove(key);
             return uploadResponse;
+        } catch (IOException e) {
+            logger.info("Bulk Upload IOException", e);
+            EntityMessages entityMessages = new EntityMessages(conceptAlias);
+            entityMessages.addErrorMessage("Incomplete Upload", new Message("Incomplete file upload"));
+            return new UploadResponse(false, entityMessages);
         } finally {
-            is.close();
+            try {
+                is.close();
+            } catch (IOException ignored) {
+            }
         }
     }
 
