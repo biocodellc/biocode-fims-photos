@@ -9,7 +9,7 @@ import biocode.fims.application.config.PhotosSql;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.service.NetworkService;
-import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.ws.rs.client.Client;

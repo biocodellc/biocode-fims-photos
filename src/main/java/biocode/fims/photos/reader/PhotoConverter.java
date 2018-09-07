@@ -14,7 +14,7 @@ import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;
 import org.apache.commons.collections.keyvalue.MultiKey;
-import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
