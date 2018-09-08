@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -199,7 +200,9 @@ public class PhotosResource extends FimsController {
             resumableUploads.remove(key);
             return uploadResponse;
         } catch (IOException e) {
-            logger.info("Bulk Upload IOException", e);
+            if (!(e.getCause() instanceof TimeoutException)) {
+                logger.info("Bulk Upload IOException", e);
+            }
             EntityMessages entityMessages = new EntityMessages(conceptAlias);
             entityMessages.addErrorMessage("Incomplete Upload", new Message("Incomplete file upload"));
             return new UploadResponse(false, entityMessages);
