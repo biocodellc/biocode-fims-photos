@@ -116,7 +116,7 @@ public class BulkPhotoPackage {
                     .build()
                     .readAll();
 
-            List<String> metadataColumns = Arrays.asList(metadata.remove(0));
+            List<String> metadataColumns = new ArrayList<>(Arrays.asList(metadata.remove(0)));
 
             int expeditionCol = metadataColumns.indexOf(Record.EXPEDITION_CODE);
             // if missing parent identifier column, we can't set the expedition
@@ -147,13 +147,17 @@ public class BulkPhotoPackage {
                 metadataColumns.add(Record.EXPEDITION_CODE);
             }
 
-            data.add((String[]) metadataColumns.toArray());
+            data.add(metadataColumns.toArray(new String[metadataColumns.size()]));
 
             for (String[] row : metadata) {
-                if (setExpedition) {
+                if (row.length != metadataColumns.size()) {
                     row = Arrays.copyOf(row, metadataColumns.size());
+                }
+
+                if (setExpedition) {
                     row[expeditionCol] = getExpeditionCode(row[parentIdentifierCol]);
                 }
+
                 String fileName = row[fileNameCol];
                 if (this.files.containsKey(fileName)) {
                     List<File> files = this.files.get(fileName);
@@ -278,7 +282,9 @@ public class BulkPhotoPackage {
                 String ext = FileUtils.getExtension(fileName, "");
 
                 // ignore nested directories & unsupported file extensions
-                if (ze.isDirectory() || fileName.split(File.separator).length > 1 || !fileSuffixes.contains(ext.toLowerCase())) {
+                if (ze.isDirectory() ||
+                        fileName.split(File.separator).length > 1 ||
+                        (!fileSuffixes.contains(ext.toLowerCase()) && !METADATA_FILE_NAME.equals(fileName))) {
                     logger.info("ignoring dir/unsupported file: " + ze.getName());
                     invalidFiles.add(ze.getName());
 
