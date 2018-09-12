@@ -15,6 +15,8 @@ import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;
 import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.lang3.text.StrSubstitutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
@@ -25,6 +27,7 @@ import java.util.*;
  * @author rjewing
  */
 public class PhotoConverter implements DataConverter {
+    private final static Logger logger = LoggerFactory.getLogger(PhotoConverter.class);
     private final PhotosSql photosSql;
     private final RecordRepository recordRepository;
     protected File file;
@@ -71,9 +74,17 @@ public class PhotoConverter implements DataConverter {
             PhotoRecord existing = existingRecords.get(new MultiKey(record.get(parentKey), record.photoID()));
 
             if (existing != null) {
-                // if the originalUrl is the same copy a few existing props
-                // TODO possibly need to persist more data?
-                if (Objects.equals(record.originalUrl(), existing.originalUrl())) {
+                // delete bulk loaded file for existing record if it exists
+                if (existing.bulkLoad() && !existing.bulkLoadFile().equals(record.bulkLoadFile())) {
+                    try {
+                        File img = new File(existing.bulkLoadFile());
+                        img.delete();
+                    } catch (Exception exp) {
+                        logger.debug("Failed to delete bulk loaded img file", exp);
+                    }
+                } else if (Objects.equals(record.originalUrl(), existing.originalUrl())) {
+                    // if the originalUrl is the same copy a few existing props
+                    // TODO possibly need to persist more data?
                     for (PhotoEntityProps p : PhotoEntityProps.values()) {
                         record.set(p.value(), existing.get(p.value()));
                     }

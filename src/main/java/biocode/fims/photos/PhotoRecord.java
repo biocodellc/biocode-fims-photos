@@ -4,9 +4,7 @@ import biocode.fims.records.GenericRecord;
 
 import java.util.Map;
 
-import static biocode.fims.photos.PhotoEntityProps.BULK_LOAD;
-import static biocode.fims.photos.PhotoEntityProps.ORIGINAL_URL;
-import static biocode.fims.photos.PhotoEntityProps.PHOTO_ID;
+import static biocode.fims.photos.PhotoEntityProps.*;
 
 /**
  * @author rjewing
@@ -30,7 +28,11 @@ public class PhotoRecord extends GenericRecord {
     }
 
     public boolean bulkLoad() {
-        return Boolean.parseBoolean(properties.get(BULK_LOAD.value()));
+        return bulkLoadFile() != null;
+    }
+
+    public String bulkLoadFile() {
+        return properties.get(BULK_LOAD_FILE.value());
     }
 }
 

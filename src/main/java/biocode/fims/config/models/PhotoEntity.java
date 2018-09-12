@@ -5,12 +5,11 @@ import biocode.fims.config.models.PropEntity;
 import biocode.fims.models.dataTypes.JacksonUtil;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.validation.rules.RequiredValueRule;
-import biocode.fims.validation.rules.Rule;
-import biocode.fims.validation.rules.RuleLevel;
-import biocode.fims.validation.rules.Rules;
+import biocode.fims.validation.rules.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 
@@ -41,7 +40,7 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         setUniqueKey(PHOTO_ID.value());
         getAttribute(PROCESSED.value()).setInternal(true);
         getAttribute(PROCESSING_ERROR.value()).setInternal(true);
-        getAttribute(BULK_LOAD.value()).setInternal(true);
+        getAttribute(BULK_LOAD_FILE.value()).setInternal(true);
         recordType = PhotoRecord.class;
 
         // note: default rules are set in the PhotoValidator
@@ -63,7 +62,10 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         }
 
         requiredValueRule.addColumn(PHOTO_ID.value());
-        requiredValueRule.addColumn(ORIGINAL_URL.value());
+
+        LinkedHashSet<String> columns = new LinkedHashSet<>(Arrays.asList(ORIGINAL_URL.value(), BULK_LOAD_FILE.value()));
+        RequiredValueInGroupRule requiredValueInGroupRule = new RequiredValueInGroupRule(columns, RuleLevel.ERROR);
+        addRule(requiredValueInGroupRule);
     }
 
     @Override

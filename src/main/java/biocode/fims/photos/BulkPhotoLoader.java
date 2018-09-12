@@ -6,7 +6,6 @@ import biocode.fims.reader.DataConverterFactory;
 import biocode.fims.reader.DataReaderFactory;
 import biocode.fims.reader.TabularDataReaderType;
 import biocode.fims.records.RecordMetadata;
-import biocode.fims.records.RecordSet;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.rest.responses.UploadResponse;
 import biocode.fims.run.DatasetProcessor;
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static biocode.fims.photos.PhotoEntityProps.BULK_LOAD;
 import static biocode.fims.reader.plugins.DelimitedTextReader.SHEET_NAME_KEY;
 
 /**
@@ -67,13 +65,6 @@ public class BulkPhotoLoader {
                 .build();
 
         boolean isvalid = processor.validate();
-
-        // mark every image as bulk loaded
-        for (RecordSet recordSet : processor.dataset()) {
-            if (photoPackage.entity().equals(recordSet.entity())) {
-                recordSet.recordsToPersist().forEach(r -> r.set(BULK_LOAD.value(), "true"));
-            }
-        }
 
         processor.upload();
 

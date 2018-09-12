@@ -134,10 +134,10 @@ public class BulkPhotoPackage {
                 throw new FimsRuntimeException(ValidationCode.INVALID_DATASET, 400, METADATA_FILE_NAME + " is missing a fileName column");
             }
 
-            int originalUrlCol = metadataColumns.indexOf(PhotoEntityProps.ORIGINAL_URL.value());
-            if (originalUrlCol == -1) {
-                originalUrlCol = metadataColumns.size();
-                metadataColumns.add(PhotoEntityProps.ORIGINAL_URL.value());
+            int bulkLoadFileCol = metadataColumns.indexOf(PhotoEntityProps.BULK_LOAD_FILE.value());
+            if (bulkLoadFileCol == -1) {
+                bulkLoadFileCol = metadataColumns.size();
+                metadataColumns.add(PhotoEntityProps.BULK_LOAD_FILE.value());
             }
 
             List<String[]> data = new ArrayList<>();
@@ -158,9 +158,9 @@ public class BulkPhotoPackage {
                 if (this.files.containsKey(fileName)) {
                     List<File> files = this.files.get(fileName);
                     if (files.size() > 1) {
-                        row[originalUrlCol] = files.remove(0).getAbsolutePath();
+                        row[bulkLoadFileCol] = files.remove(0).getAbsolutePath();
                     } else {
-                        row[originalUrlCol] = files.get(0).getAbsolutePath();
+                        row[bulkLoadFileCol] = files.get(0).getAbsolutePath();
                     }
                 }
                 data.add(row);
@@ -180,8 +180,8 @@ public class BulkPhotoPackage {
 
         data.add(new String[]{
                 parentEntity.getUniqueKey(),
-                PhotoEntityProps.PHOTO_ID.toString(),
-                PhotoEntityProps.ORIGINAL_URL.toString(),
+                PhotoEntityProps.PHOTO_ID.value(),
+                PhotoEntityProps.BULK_LOAD_FILE.value(),
                 Record.EXPEDITION_CODE
         });
 
