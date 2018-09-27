@@ -54,8 +54,6 @@ dependencies {
     testCompile "junit:junit-dep:4.10"
     testCompile 'org.mockito:mockito-all:1.9.5'
 
-    integrationTestCompile project(path: ":biocode-fims-commons", configuration: "integrationTestOutput")
-
     subprojects.each {
         project.configurations.server.dependencies.addAll(it.configurations.server.dependencies)
         project.configurations.serverRuntime.dependencies.addAll(it.configurations.serverRuntime.dependencies)
