@@ -43,10 +43,9 @@ public class PhotoProcessingTaskExecutor {
                             UnprocessedPhotoRecord record = task.record();
                             recordRepository.saveChildRecord(
                                     record,
-                                    record.projectId(),
+                                    record.networkId(),
                                     record.parentEntity(),
-                                    record.entity(),
-                                    record.expeditionId()
+                                    record.entity()
                             );
                         } catch (Exception e) {
                             logger.error(e.getMessage(), e);

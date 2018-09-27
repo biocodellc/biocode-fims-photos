@@ -1,6 +1,6 @@
 package biocode.fims.photos.processing;
 
-import biocode.fims.projectConfig.models.Entity;
+import biocode.fims.config.models.Entity;
 import biocode.fims.photos.PhotoRecord;
 
 import java.util.Map;
@@ -10,33 +10,21 @@ import java.util.Map;
  */
 public class UnprocessedPhotoRecord extends PhotoRecord {
 
-    private final int projectId;
-    private final int expeditionId;
+    private final int networkId;
     private final Entity entity;
     private final Entity parentEntity;
 
-    public UnprocessedPhotoRecord(Entity parentEntity, Entity entity, int projectId, int expeditionId) {
-        super();
-        this.parentEntity = parentEntity;
-        this.entity = entity;
-        this.projectId = projectId;
-        this.expeditionId = expeditionId;
-    }
-
-    public UnprocessedPhotoRecord(Map<String, String> properties, Entity parentEntity, Entity entity, int projectId, int expeditionId) {
+    public UnprocessedPhotoRecord(Map<String, String> properties, Entity parentEntity, Entity entity, int networkId, int projectId, String expeditionCode) {
         super(properties);
         this.parentEntity = parentEntity;
         this.entity = entity;
-        this.projectId = projectId;
-        this.expeditionId = expeditionId;
+        this.networkId = networkId;
+        setProjectId(projectId);
+        setExpeditionCode(expeditionCode);
     }
 
-    public int projectId() {
-        return projectId;
-    }
-
-    public int expeditionId() {
-        return expeditionId;
+    public int networkId() {
+        return networkId;
     }
 
     public Entity entity() {

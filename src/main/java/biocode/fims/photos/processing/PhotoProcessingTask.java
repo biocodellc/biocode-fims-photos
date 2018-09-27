@@ -8,7 +8,7 @@ public class PhotoProcessingTask implements Runnable {
     private final PhotoProcessor photoProcessor;
     private final UnprocessedPhotoRecord record;
 
-    public PhotoProcessingTask(PhotoProcessor photoProcessor, UnprocessedPhotoRecord record) {
+    PhotoProcessingTask(PhotoProcessor photoProcessor, UnprocessedPhotoRecord record) {
         this.photoProcessor = photoProcessor;
         this.record = record;
     }

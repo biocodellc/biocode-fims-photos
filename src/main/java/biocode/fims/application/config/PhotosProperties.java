@@ -21,19 +21,12 @@ public class PhotosProperties {
     }
 
     public String photosRoot() {
-        String base = env.getRequiredProperty("appRoot");
         String path = env.getRequiredProperty("photosRoot");
 
         if (!path.endsWith("/")) {
             path += "/";
         }
 
-        if (base.endsWith("/") && path.startsWith("/")) {
-            return base + path.replaceFirst("/", "");
-        } else if (!base.endsWith("/") && !path.startsWith("/")) {
-            return base + "/" + path;
-        } else {
-            return base + path;
-        }
+        return path;
     }
 }

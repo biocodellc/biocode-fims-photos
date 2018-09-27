@@ -1,6 +1,7 @@
 package biocode.fims.photos.reader;
 
 import biocode.fims.application.config.PhotosSql;
+import biocode.fims.config.project.ProjectConfig;
 import biocode.fims.fimsExceptions.FimsRuntimeException;
 import biocode.fims.fimsExceptions.errorCodes.DataReaderCode;
 import biocode.fims.records.GenericRecord;
@@ -9,28 +10,31 @@ import biocode.fims.records.Record;
 import biocode.fims.records.RecordSet;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
-import biocode.fims.projectConfig.ProjectConfig;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;
-import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.collections.keyvalue.MultiKey;
+import org.apache.commons.lang3.text.StrSubstitutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author rjewing
  */
 public class PhotoConverter implements DataConverter {
+    private final static Logger logger = LoggerFactory.getLogger(PhotoConverter.class);
     private final PhotosSql photosSql;
     private final RecordRepository recordRepository;
     protected File file;
     protected ProjectConfig config;
+
+    private Map<MultiKey, PhotoRecord> existingRecords;
+    private String parentKey;
 
     public PhotoConverter(PhotosSql photosSql, RecordRepository recordRepository) {
         this.photosSql = photosSql;
@@ -43,12 +47,14 @@ public class PhotoConverter implements DataConverter {
     }
 
     @Override
-    public RecordSet convertRecordSet(RecordSet recordSet, int projectId, String expeditionCode) {
+    public RecordSet convertRecordSet(RecordSet recordSet, int networkId) {
         String parent = recordSet.entity().getParentEntity();
-        String parentKey = config.entity(parent).getUniqueKeyURI();
+        parentKey = config.entity(parent).getUniqueKeyURI();
 
-        List<PhotoRecord> existingRecords = getExistingRecords(recordSet, projectId, expeditionCode, parentKey);
-        updateRecords(recordSet, existingRecords, parentKey);
+        existingRecords = new HashMap<>();
+        getExistingRecords(recordSet, networkId, parentKey)
+                .forEach(r -> existingRecords.put(new MultiKey(r.get(parentKey), r.photoID()), r));
+        updateRecords(recordSet);
         return recordSet;
     }
 
@@ -58,27 +64,32 @@ public class PhotoConverter implements DataConverter {
      * This is necessary because we do additional processing on photos and need to preserve some data.
      *
      * @param recordSet
-     * @param existingRecords
-     * @param parentKey
      */
-    private void updateRecords(RecordSet recordSet, List<PhotoRecord> existingRecords, String parentKey) {
+    private void updateRecords(RecordSet recordSet) {
         for (Record r : recordSet.recordsToPersist()) {
             PhotoRecord record = (PhotoRecord) r;
 
             record.set(PhotoEntityProps.PROCESSED.value(), "false");
 
-            existingRecords.stream()
-                    .filter(er -> er.photoID().equals(record.photoID()) && er.get(parentKey).equals(record.get(parentKey)))
-                    .findFirst()
-                    .ifPresent(er -> {
-                        // if the originalUrl is the same copy a few existing props
-                        // TODO possibly need to persist more data?
-                        if (er.originalUrl().equals(record.originalUrl())) {
-                            for (PhotoEntityProps p : PhotoEntityProps.values()) {
-                                record.set(p.value(), er.get(p.value()));
-                            }
-                        }
-                    });
+            PhotoRecord existing = existingRecords.get(new MultiKey(record.get(parentKey), record.photoID()));
+
+            if (existing != null) {
+                // delete bulk loaded file for existing record if it exists
+                if (existing.bulkLoad() && !existing.bulkLoadFile().equals(record.bulkLoadFile())) {
+                    try {
+                        File img = new File(existing.bulkLoadFile());
+                        img.delete();
+                    } catch (Exception exp) {
+                        logger.debug("Failed to delete bulk loaded img file", exp);
+                    }
+                } else if (Objects.equals(record.originalUrl(), existing.originalUrl())) {
+                    // if the originalUrl is the same copy a few existing props
+                    // TODO possibly need to persist more data?
+                    for (PhotoEntityProps p : PhotoEntityProps.values()) {
+                        record.set(p.value(), existing.get(p.value()));
+                    }
+                }
+            }
 
         }
     }
@@ -87,19 +98,18 @@ public class PhotoConverter implements DataConverter {
      * fetch any existing records for that are in the given RecordSet
      *
      * @param recordSet
-     * @param projectId
-     * @param expeditionCode
+     * @param networkId
      * @param parentKey
      * @return
      */
-    private List<PhotoRecord> getExistingRecords(RecordSet recordSet, int projectId, String expeditionCode, String parentKey) {
-        if (projectId == 0 || expeditionCode == null) {
+    private List<PhotoRecord> getExistingRecords(RecordSet recordSet, int networkId, String parentKey) {
+        if (networkId == 0 || recordSet.expeditionCode() == null) {
             throw new FimsRuntimeException(DataReaderCode.READ_ERROR, 500);
         }
 
         String sql = photosSql.getRecords();
         Map<String, String> tableMap = new HashMap<>();
-        tableMap.put("table", PostgresUtils.entityTable(projectId, recordSet.entity().getConceptAlias()));
+        tableMap.put("table", PostgresUtils.entityTable(networkId, recordSet.entity().getConceptAlias()));
 
         List<String[]> idList = new ArrayList<>();
 
@@ -109,7 +119,7 @@ public class PhotoConverter implements DataConverter {
 
         MapSqlParameterSource p = new MapSqlParameterSource();
         p.addValue("idList", idList);
-        p.addValue("expeditionCode", expeditionCode);
+        p.addValue("expeditionCode", recordSet.expeditionCode());
 
         RowMapper<GenericRecord> rowMapper = new GenericRecordRowMapper();
         return recordRepository.query(

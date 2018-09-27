@@ -37,8 +37,14 @@ public class BasicPhotoProcessor implements PhotoProcessor {
     @Override
     public void process(UnprocessedPhotoRecord record) {
         try {
-            BufferedImage orig = new FileRequest(client, record.originalUrl())
-                    .execute();
+            BufferedImage orig;
+
+            if (record.bulkLoad()) {
+                orig = ImageIO.read(new File(record.bulkLoadFile()));
+            } else {
+                orig = new FileRequest(client, record.originalUrl())
+                        .execute();
+            }
 
             ImageScaler scaler = new ImageScaler(orig);
 
@@ -48,11 +54,17 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             // make dirs if necessary
             dir.toFile().mkdirs();
 
-            String formatName = FileUtils.getExtension(record.originalUrl(), "jpg");
+            // strip any query params from the url
+            String originalFile = record.bulkLoad() ? record.bulkLoadFile() : record.originalUrl().replaceFirst("\\?.*", "");
+            String formatName = FileUtils.getExtension(originalFile, "jpg");
 
-            String img_128 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 128);
-            String img_512 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 512);
-            String img_1024 = this.resize(scaler, dir.toString(), record.photoID(), formatName, 1024);
+            String img_128 = this.resize(scaler, dir.toString(), record.expeditionCode() + "_" + record.photoID(), formatName, 128);
+            String img_512 = this.resize(scaler, dir.toString(), record.expeditionCode() + "_" + record.photoID(), formatName, 512);
+            String img_1024 = this.resize(scaler, dir.toString(), record.expeditionCode() + "_" + record.photoID(), formatName, 1024);
+
+            if (record.bulkLoad()) {
+                deleteBulkLoadFile(record);
+            }
 
             record.set(PhotoEntityProps.IMG_128.value(), img_128);
             record.set(PhotoEntityProps.IMG_512.value(), img_512);
@@ -66,11 +78,29 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             );
             throw e;
         } catch (IOException e) {
-            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), "[\"Failed to process photo found at originalUrl.\"]");
+            String msg;
+            if (record.bulkLoad()) {
+                msg = "[\"Failed to process photo from bulk load. Image may be corrupt\"]";
+                deleteBulkLoadFile(record);
+            } else {
+                msg = "[\"Failed to process photo found at originalUrl.\"]";
+            }
+
+            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), msg);
             throw new FimsRuntimeException(500, e);
         } finally {
             record.set(PhotoEntityProps.PROCESSED.value(), "true");
         }
+    }
+
+    private void deleteBulkLoadFile(PhotoRecord record) {
+        try {
+            File img = new File(record.bulkLoadFile());
+            img.delete();
+        } catch (Exception exp) {
+            logger.debug("Failed to delete bulk loaded img file", exp);
+        }
+        record.set(PhotoEntityProps.BULK_LOAD_FILE.value(), null);
     }
 
     /**
