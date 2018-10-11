@@ -8,6 +8,7 @@ import biocode.fims.reader.TabularDataReaderType;
 import biocode.fims.records.RecordMetadata;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.rest.responses.UploadResponse;
+import biocode.fims.run.DatasetAuthorizer;
 import biocode.fims.run.DatasetProcessor;
 import biocode.fims.run.ProcessorStatus;
 import biocode.fims.validation.RecordValidatorFactory;
@@ -31,16 +32,18 @@ public class BulkPhotoLoader {
     private final RecordValidatorFactory validatorFactory;
     private final RecordRepository recordRepository;
     private final DataConverterFactory dataConverterFactory;
+    private final DatasetAuthorizer datasetAuthorizer;
     private final FimsProperties props;
 
     @Autowired
     public BulkPhotoLoader(DataReaderFactory readerFactory, RecordValidatorFactory validatorFactory,
                            RecordRepository recordRepository, DataConverterFactory dataConverterFactory,
-                           FimsProperties props) {
+                           DatasetAuthorizer datasetAuthorizer, FimsProperties props) {
         this.readerFactory = readerFactory;
         this.validatorFactory = validatorFactory;
         this.recordRepository = recordRepository;
         this.dataConverterFactory = dataConverterFactory;
+        this.datasetAuthorizer = datasetAuthorizer;
         this.props = props;
     }
 
@@ -58,7 +61,7 @@ public class BulkPhotoLoader {
                 .dataConverterFactory(dataConverterFactory)
                 .recordRepository(recordRepository)
                 .validatorFactory(validatorFactory)
-                .ignoreUser(props.ignoreUser() || project.getUser().equals(photoPackage.user())) // projectAdmin can modify expedition data
+                .datasetAuthorizer(datasetAuthorizer)
                 .serverDataDir(props.serverRoot())
                 .uploadValid()
                 .addDataset(metadataFile.getAbsolutePath(), new RecordMetadata(TabularDataReaderType.READER_TYPE, false, metadata))

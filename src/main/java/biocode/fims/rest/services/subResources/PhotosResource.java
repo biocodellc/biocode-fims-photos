@@ -101,7 +101,7 @@ public class PhotosResource extends FimsController {
         clearExpiredUploadEntries();
 
         User user = userContext.getUser();
-        Project project = projectService.getProjectWithExpeditions(projectId);
+        Project project = projectService.getProject(projectId);
 
         // valid request logic
 
