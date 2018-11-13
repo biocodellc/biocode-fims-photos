@@ -39,6 +39,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipInputStream;
@@ -101,7 +102,7 @@ public class PhotosResource extends FimsController {
         clearExpiredUploadEntries();
 
         User user = userContext.getUser();
-        Project project = projectService.getProjectWithExpeditions(projectId);
+        Project project = projectService.getProject(projectId);
 
         // valid request logic
 
@@ -115,7 +116,7 @@ public class PhotosResource extends FimsController {
 
         if (entity == null) {
             throw new BadRequestException("Invalid entity path param");
-        } else if (!(entity instanceof PhotoEntity)) {
+        } else if (!(Objects.equals(entity.type(), PhotoEntity.TYPE))) {
             throw new BadRequestException("Specified entity is not a PhotoEntity");
         }
 
