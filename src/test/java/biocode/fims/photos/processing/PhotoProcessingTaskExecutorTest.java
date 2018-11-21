@@ -43,8 +43,8 @@ public class PhotoProcessingTaskExecutorTest {
 
     private PhotoProcessingTask getPhotoProcessingTask() {
         UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(new HashMap<>(), null,null, 0, 0, null);
-        photo.set(PhotoEntityProps.PROCESSED.value(), "false");
-        photo.set(PhotoEntityProps.PHOTO_ID.value(), "Photo1");
+        photo.set(PhotoEntityProps.PROCESSED.uri(), "false");
+        photo.set(PhotoEntityProps.PHOTO_ID.uri(), "Photo1");
         return new PhotoProcessingTask(null, photo);
     }
 

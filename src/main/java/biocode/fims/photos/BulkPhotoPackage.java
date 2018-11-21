@@ -134,10 +134,10 @@ public class BulkPhotoPackage {
                 throw new FimsRuntimeException(ValidationCode.INVALID_DATASET, 400, METADATA_FILE_NAME + " is missing a fileName column");
             }
 
-            int bulkLoadFileCol = metadataColumns.indexOf(PhotoEntityProps.BULK_LOAD_FILE.value());
+            int bulkLoadFileCol = metadataColumns.indexOf(PhotoEntityProps.BULK_LOAD_FILE.uri());
             if (bulkLoadFileCol == -1) {
                 bulkLoadFileCol = metadataColumns.size();
-                metadataColumns.add(PhotoEntityProps.BULK_LOAD_FILE.value());
+                metadataColumns.add(PhotoEntityProps.BULK_LOAD_FILE.uri());
             }
 
             List<String[]> data = new ArrayList<>();
@@ -184,8 +184,8 @@ public class BulkPhotoPackage {
 
         data.add(new String[]{
                 parentEntity.getUniqueKey(),
-                PhotoEntityProps.PHOTO_ID.value(),
-                PhotoEntityProps.BULK_LOAD_FILE.value(),
+                PhotoEntityProps.PHOTO_ID.uri(),
+                PhotoEntityProps.BULK_LOAD_FILE.uri(),
                 Record.EXPEDITION_CODE
         });
 

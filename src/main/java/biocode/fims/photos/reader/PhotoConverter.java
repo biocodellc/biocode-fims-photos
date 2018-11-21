@@ -69,7 +69,7 @@ public class PhotoConverter implements DataConverter {
         for (Record r : recordSet.recordsToPersist()) {
             PhotoRecord record = (PhotoRecord) r;
 
-            record.set(PhotoEntityProps.PROCESSED.value(), "false");
+            record.set(PhotoEntityProps.PROCESSED.uri(), "false");
 
             PhotoRecord existing = existingRecords.get(new MultiKey(record.get(parentKey), record.photoID()));
 
@@ -86,7 +86,7 @@ public class PhotoConverter implements DataConverter {
                     // if the originalUrl is the same copy a few existing props
                     // TODO possibly need to persist more data?
                     for (PhotoEntityProps p : PhotoEntityProps.values()) {
-                        record.set(p.value(), existing.get(p.value()));
+                        record.set(p.uri(), existing.get(p.uri()));
                     }
                 }
             }
