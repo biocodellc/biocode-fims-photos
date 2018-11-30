@@ -22,7 +22,12 @@ public enum PhotoEntityProps implements EntityProps {
     }
 
     @Override
-    public String value() {
+    public String uri() {
+        return val;
+    }
+
+    @Override
+    public String column() {
         return val;
     }
 

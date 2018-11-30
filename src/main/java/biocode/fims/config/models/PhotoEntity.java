@@ -37,13 +37,13 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         super.init();
 
         // TODO look into possibility of using photo hashing, but worried about false positives
-        setUniqueKey(PHOTO_ID.value());
-        getAttribute(PROCESSED.value()).setInternal(true);
-        getAttribute(PROCESSING_ERROR.value()).setInternal(true);
-        getAttribute(BULK_LOAD_FILE.value()).setInternal(true);
-        getAttribute(IMG_128.value()).setInternal(true);
-        getAttribute(IMG_512.value()).setInternal(true);
-        getAttribute(IMG_1024.value()).setInternal(true);
+        setUniqueKey(PHOTO_ID.column());
+        getAttribute(PROCESSED.column()).setInternal(true);
+        getAttribute(PROCESSING_ERROR.column()).setInternal(true);
+        getAttribute(BULK_LOAD_FILE.column()).setInternal(true);
+        getAttribute(IMG_128.column()).setInternal(true);
+        getAttribute(IMG_512.column()).setInternal(true);
+        getAttribute(IMG_1024.column()).setInternal(true);
         recordType = PhotoRecord.class;
 
         // note: default rules are set in the PhotoValidator
@@ -64,37 +64,16 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
             addRule(requiredValueRule);
         }
 
-        requiredValueRule.addColumn(PHOTO_ID.value());
+        requiredValueRule.addColumn(PHOTO_ID.column());
 
-        LinkedHashSet<String> columns = new LinkedHashSet<>(Arrays.asList(ORIGINAL_URL.value(), BULK_LOAD_FILE.value()));
+        LinkedHashSet<String> columns = new LinkedHashSet<>(Arrays.asList(ORIGINAL_URL.column(), BULK_LOAD_FILE.column()));
         RequiredValueInGroupRule requiredValueInGroupRule = new RequiredValueInGroupRule(columns, RuleLevel.ERROR);
         addRule(requiredValueInGroupRule);
     }
 
     @Override
     public Entity clone() {
-        PhotoEntity entity = new PhotoEntity(getConceptAlias());
-
-        getRules().forEach(r -> {
-            // TODO create a Rule method clone()
-            // hacky way to make a copy of the rule
-            Rule newR = JacksonUtil.fromString(
-                    JacksonUtil.toString(r),
-                    r.getClass()
-            );
-            entity.addRule(newR);
-        });
-        getAttributes().forEach(a -> entity.addAttribute(a.clone()));
-
-        entity.setParentEntity(getParentEntity());
-        entity.recordType = recordType;
-
-        entity.setWorksheet(getWorksheet());
-        entity.setUniqueKey(getUniqueKey());
-        entity.setUniqueAcrossProject(getUniqueAcrossProject());
-        entity.setHashed(isHashed());
-
-        return entity;
+        return clone(new PhotoEntity(getConceptAlias()));
     }
 
     /**

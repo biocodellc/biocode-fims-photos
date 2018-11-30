@@ -66,14 +66,14 @@ public class BasicPhotoProcessor implements PhotoProcessor {
                 deleteBulkLoadFile(record);
             }
 
-            record.set(PhotoEntityProps.IMG_128.value(), img_128);
-            record.set(PhotoEntityProps.IMG_512.value(), img_512);
-            record.set(PhotoEntityProps.IMG_1024.value(), img_1024);
-            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), null);
+            record.set(PhotoEntityProps.IMG_128.uri(), img_128);
+            record.set(PhotoEntityProps.IMG_512.uri(), img_512);
+            record.set(PhotoEntityProps.IMG_1024.uri(), img_1024);
+            record.set(PhotoEntityProps.PROCESSING_ERROR.uri(), null);
 
         } catch (ResponseProcessingException | WebApplicationException e) {
             record.set(
-                    PhotoEntityProps.PROCESSING_ERROR.value(),
+                    PhotoEntityProps.PROCESSING_ERROR.uri(),
                     "[\"Failed to fetch originalUrl for processing. Is the file accessible at \"" + record.originalUrl() + "\" and a valid image type?\"]"
             );
             throw e;
@@ -86,10 +86,10 @@ public class BasicPhotoProcessor implements PhotoProcessor {
                 msg = "[\"Failed to process photo found at originalUrl.\"]";
             }
 
-            record.set(PhotoEntityProps.PROCESSING_ERROR.value(), msg);
+            record.set(PhotoEntityProps.PROCESSING_ERROR.uri(), msg);
             throw new FimsRuntimeException(500, e);
         } finally {
-            record.set(PhotoEntityProps.PROCESSED.value(), "true");
+            record.set(PhotoEntityProps.PROCESSED.uri(), "true");
         }
     }
 
@@ -100,7 +100,7 @@ public class BasicPhotoProcessor implements PhotoProcessor {
         } catch (Exception exp) {
             logger.debug("Failed to delete bulk loaded img file", exp);
         }
-        record.set(PhotoEntityProps.BULK_LOAD_FILE.value(), null);
+        record.set(PhotoEntityProps.BULK_LOAD_FILE.uri(), null);
     }
 
     /**
@@ -109,13 +109,13 @@ public class BasicPhotoProcessor implements PhotoProcessor {
      * @param record
      */
     private void removeExistingImages(PhotoRecord record) {
-        String img_128 = record.get(PhotoEntityProps.IMG_128.value());
+        String img_128 = record.get(PhotoEntityProps.IMG_128.uri());
         if (!img_128.trim().equals("")) removeImg(img_128);
 
-        String img_512 = record.get(PhotoEntityProps.IMG_512.value());
+        String img_512 = record.get(PhotoEntityProps.IMG_512.uri());
         if (!img_512.trim().equals("")) removeImg(img_512);
 
-        String img_1024 = record.get(PhotoEntityProps.IMG_1024.value());
+        String img_1024 = record.get(PhotoEntityProps.IMG_1024.uri());
         if (!img_1024.trim().equals("")) removeImg(img_1024);
     }
 

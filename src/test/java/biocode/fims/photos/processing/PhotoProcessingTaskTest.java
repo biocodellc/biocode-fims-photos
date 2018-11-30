@@ -28,9 +28,9 @@ public class PhotoProcessingTaskTest {
 
     private UnprocessedPhotoRecord getPhotoRecord() {
         UnprocessedPhotoRecord photo = new UnprocessedPhotoRecord(new HashMap<>(), null,null, 0, 0, null);
-        photo.set(PhotoEntityProps.PROCESSED.value(), "false");
-        photo.set(PhotoEntityProps.PHOTO_ID.value(), "Photo1");
-        photo.set(PhotoEntityProps.ORIGINAL_URL.value(), "ftp:///photo/location");
+        photo.set(PhotoEntityProps.PROCESSED.uri(), "false");
+        photo.set(PhotoEntityProps.PHOTO_ID.uri(), "Photo1");
+        photo.set(PhotoEntityProps.ORIGINAL_URL.uri(), "ftp:///photo/location");
         return photo;
     }
 
