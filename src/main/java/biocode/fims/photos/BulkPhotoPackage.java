@@ -286,7 +286,9 @@ public class BulkPhotoPackage {
                         fileName.split(File.separator).length > 1 ||
                         (!fileSuffixes.contains(ext.toLowerCase()) && !METADATA_FILE_NAME.equals(fileName))) {
                     logger.info("ignoring dir/unsupported file: " + ze.getName());
-                    invalidFiles.add(ze.getName());
+
+                    // don't report about hidden osx included dir
+                    if (!ze.getName().startsWith("__MACOSX")) invalidFiles.add(ze.getName());
 
                     if (ze.isDirectory()) {
                         // skip everything in that directory
