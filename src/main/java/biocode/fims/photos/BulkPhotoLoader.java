@@ -72,7 +72,7 @@ public class BulkPhotoLoader {
         processor.upload();
 
         ArrayList<String> invalidFiles = photoPackage.invalidFiles();
-        EntityMessages entityMessages = null;
+        EntityMessages entityMessages = new EntityMessages(photoPackage.entity().getConceptAlias());
         if (!isvalid || invalidFiles.size() > 0) {
             String conceptAlias = photoPackage.entity().getConceptAlias();
 
