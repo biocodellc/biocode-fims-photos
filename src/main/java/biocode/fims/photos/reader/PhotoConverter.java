@@ -85,7 +85,10 @@ public class PhotoConverter implements DataConverter {
                 } else if (Objects.equals(record.originalUrl(), existing.originalUrl())) {
                     // if the originalUrl is the same copy a few existing props
                     // TODO possibly need to persist more data?
+                    boolean newBulkLoad = !record.get(PhotoEntityProps.BULK_LOAD_FILE.uri()).equals("");
                     for (PhotoEntityProps p : PhotoEntityProps.values()) {
+                        // don't overwrite the BULK_LOAD_FILE or PROCESSED if this is a new bulk load
+                        if (newBulkLoad && (p.equals(PhotoEntityProps.BULK_LOAD_FILE) ||p.equals(PhotoEntityProps.PROCESSED))) continue;
                         record.set(p.uri(), existing.get(p.uri()));
                     }
                 }
