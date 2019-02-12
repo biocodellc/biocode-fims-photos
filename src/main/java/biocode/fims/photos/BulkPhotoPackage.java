@@ -288,7 +288,9 @@ public class BulkPhotoPackage {
                     logger.info("ignoring dir/unsupported file: " + ze.getName());
 
                     // don't report about hidden osx included dir
-                    if (!ze.getName().startsWith("__MACOSX")) invalidFiles.add(ze.getName());
+                    if (!ze.getName().startsWith("__MACOSX") && !ze.getName().equals(".DS_Store")) {
+                        invalidFiles.add(ze.getName());
+                    }
 
                     if (ze.isDirectory()) {
                         // skip everything in that directory
