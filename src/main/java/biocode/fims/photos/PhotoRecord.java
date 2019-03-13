@@ -26,11 +26,11 @@ public class PhotoRecord extends GenericRecord {
     }
 
     public String originalUrl() {
-        return properties.get(ORIGINAL_URL.uri());
+        return get(ORIGINAL_URL.uri());
     }
 
     public String photoID() {
-        return properties.get(PHOTO_ID.uri());
+        return get(PHOTO_ID.uri());
     }
 
     public boolean bulkLoad() {
@@ -38,7 +38,7 @@ public class PhotoRecord extends GenericRecord {
     }
 
     public String bulkLoadFile() {
-        return properties.get(BULK_LOAD_FILE.uri());
+        return get(BULK_LOAD_FILE.uri());
     }
 
     @Override
