@@ -47,15 +47,15 @@ public class PhotoConverter implements DataConverter {
     }
 
     @Override
-    public RecordSet convertRecordSet(RecordSet recordSet, int networkId) {
+    public void convertRecordSet(RecordSet recordSet, int networkId) {
         String parent = recordSet.entity().getParentEntity();
         parentKey = config.entity(parent).getUniqueKeyURI();
 
         existingRecords = new HashMap<>();
         getExistingRecords(recordSet, networkId, parentKey)
                 .forEach(r -> existingRecords.put(new MultiKey(r.get(parentKey), r.photoID()), r));
+
         updateRecords(recordSet);
-        return recordSet;
     }
 
     /**
