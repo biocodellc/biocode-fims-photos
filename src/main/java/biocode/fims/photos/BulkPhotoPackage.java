@@ -13,6 +13,7 @@ import biocode.fims.records.GenericRecord;
 import biocode.fims.records.Record;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.utils.FileUtils;
+import biocode.fims.utils.Flag;
 import biocode.fims.utils.StringGenerator;
 import com.opencsv.*;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ public class BulkPhotoPackage {
     private final Entity parentEntity;
     private final ArrayList<String> invalidFiles;
     private final String photosDir;
+    private final boolean ignoreId;
 
     private Map<String, String> parentExpeditionCodes;
     private Map<String, List<File>> files;
@@ -61,6 +63,7 @@ public class BulkPhotoPackage {
         this.entity = builder.entity;
         this.parentEntity = project.getProjectConfig().entity(entity.getParentEntity());
         this.recordRepository = builder.recordRepository;
+        this.ignoreId = builder.ignoreId;
         this.invalidFiles = new ArrayList<>();
         this.files = new HashMap<>();
 
@@ -194,7 +197,8 @@ public class BulkPhotoPackage {
 
             if (matcher.matches()) {
                 String parentIdentifier = matcher.group(1);
-                String photoId = matcher.group(2);
+                // setting id to empty string here will cause an id to be generated
+                String photoId = this.ignoreId && ((PhotoEntity) this.entity).isGenerateID() ? "" : matcher.group(2);
 
                 for (File f : entry.getValue()) {
                     data.add(new String[]{
@@ -288,7 +292,7 @@ public class BulkPhotoPackage {
                     logger.info("ignoring dir/unsupported file: " + ze.getName());
 
                     // don't report about hidden osx included dir
-                    if (!ze.getName().startsWith("__MACOSX") && !ze.getName().equals(".DS_Store")) {
+                    if (!ze.getName().startsWith("__MACOSX") && !ze.getName().endsWith(".DS_Store")) {
                         invalidFiles.add(ze.getName());
                     }
 
@@ -342,6 +346,7 @@ public class BulkPhotoPackage {
 
         // optional
         private String expeditionCode;
+        private boolean ignoreId = false;
 
         public Builder photosDir(String photosDir) {
             this.photosDir = photosDir;
@@ -375,6 +380,11 @@ public class BulkPhotoPackage {
 
         public Builder recordRepository(RecordRepository recordRepository) {
             this.recordRepository = recordRepository;
+            return this;
+        }
+
+        public Builder ignoreId(boolean ignoreId) {
+            this.ignoreId = ignoreId;
             return this;
         }
 

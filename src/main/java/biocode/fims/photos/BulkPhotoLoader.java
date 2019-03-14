@@ -1,6 +1,8 @@
 package biocode.fims.photos;
 
 import biocode.fims.application.config.FimsProperties;
+import biocode.fims.fimsExceptions.FimsRuntimeException;
+import biocode.fims.fimsExceptions.errorCodes.DataReaderCode;
 import biocode.fims.models.Project;
 import biocode.fims.reader.DataConverterFactory;
 import biocode.fims.reader.DataReaderFactory;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static biocode.fims.fimsExceptions.errorCodes.DataReaderCode.NO_DATA;
 import static biocode.fims.reader.plugins.DelimitedTextReader.SHEET_NAME_KEY;
 
 /**
@@ -67,9 +70,16 @@ public class BulkPhotoLoader {
                 .addDataset(metadataFile.getAbsolutePath(), new RecordMetadata(TabularDataReaderType.READER_TYPE, false, metadata))
                 .build();
 
-        boolean isvalid = processor.validate();
+        boolean isvalid = false;
+        try {
+            isvalid = processor.validate();
 
-        processor.upload();
+            processor.upload();
+        } catch (FimsRuntimeException e) {
+            if (!e.getErrorCode().equals(DataReaderCode.NO_DATA)) {
+                throw e;
+            }
+        }
 
         ArrayList<String> invalidFiles = photoPackage.invalidFiles();
         EntityMessages entityMessages = new EntityMessages(photoPackage.entity().getConceptAlias());

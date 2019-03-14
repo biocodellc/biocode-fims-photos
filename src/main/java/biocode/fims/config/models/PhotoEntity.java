@@ -1,17 +1,12 @@
 package biocode.fims.config.models;
 
 import biocode.fims.config.Config;
-import biocode.fims.config.models.PropEntity;
-import biocode.fims.models.dataTypes.JacksonUtil;
 import biocode.fims.photos.PhotoEntityProps;
 import biocode.fims.photos.PhotoRecord;
 import biocode.fims.validation.rules.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 import static biocode.fims.photos.PhotoEntityProps.*;
 
@@ -21,8 +16,12 @@ import static biocode.fims.photos.PhotoEntityProps.*;
  */
 @JsonDeserialize(converter = PhotoEntity.PhotoEntitySanitizer.class)
 public class PhotoEntity extends PropEntity<PhotoEntityProps> {
-    private static final String CONCEPT_URI = "http://rs.tdwg.org/dwc/terms/associatedMedia";
     public static final String TYPE = "Photo";
+
+    private static final String CONCEPT_URI = "http://rs.tdwg.org/dwc/terms/associatedMedia";
+    private static final String GENERATE_ID_KEY = "generateID";
+
+    private boolean generateID = false;
 
     private PhotoEntity() { // needed for EntityTypeIdResolver
         super(PhotoEntityProps.class);
@@ -49,9 +48,30 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         // note: default rules are set in the PhotoValidator
     }
 
+    public boolean isGenerateID() {
+        return generateID;
+    }
+
+    public void setGenerateID(boolean generateID) {
+        this.generateID = generateID;
+    }
+
     @Override
     public String type() {
         return TYPE;
+    }
+
+    @Override
+    public Map<String, Object> additionalProps() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(GENERATE_ID_KEY, generateID);
+        return props;
+    }
+
+    @Override
+    public void setAdditionalProps(Map<String, Object> props) {
+        if (props == null) return;
+        generateID = (boolean) props.getOrDefault(GENERATE_ID_KEY, false);
     }
 
     @Override
@@ -73,7 +93,9 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
 
     @Override
     public Entity clone() {
-        return clone(new PhotoEntity(getConceptAlias()));
+        PhotoEntity entity = new PhotoEntity(getConceptAlias());
+        entity.generateID = generateID;
+        return clone(entity);
     }
 
     /**

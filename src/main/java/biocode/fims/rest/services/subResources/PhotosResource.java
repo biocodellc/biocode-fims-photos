@@ -20,6 +20,7 @@ import biocode.fims.rest.filters.Authenticated;
 import biocode.fims.service.ExpeditionService;
 import biocode.fims.service.ProjectService;
 import biocode.fims.utils.FileUtils;
+import biocode.fims.utils.Flag;
 import biocode.fims.utils.StringGenerator;
 import biocode.fims.validation.messages.EntityMessages;
 import biocode.fims.validation.messages.Message;
@@ -97,6 +98,7 @@ public class PhotosResource extends FimsController {
     public UploadResponse bulkUpload(@QueryParam("projectId") Integer projectId,
                                      @QueryParam("expeditionCode") String expeditionCode,
                                      @QueryParam("type") UploadType uploadType,
+                                     @QueryParam("ignoreId") Flag ignoreId,
                                      @PathParam("entity") String conceptAlias,
                                      InputStream is) {
         clearExpiredUploadEntries();
@@ -190,6 +192,7 @@ public class PhotosResource extends FimsController {
                     .user(user)
                     .project(project)
                     .expeditionCode(expeditionCode)
+                    .ignoreId(ignoreId.isPresent())
                     .entity(entity)
                     .photosDir(photosProps.photosDir())
                     .recordRepository(recordRepository)
