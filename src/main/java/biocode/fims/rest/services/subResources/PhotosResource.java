@@ -31,7 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.context.annotation.RequestScope;
 
+import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
@@ -50,6 +52,7 @@ import java.util.zip.ZipInputStream;
  */
 @Controller
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class PhotosResource extends FimsController {
     private final static Logger logger = LoggerFactory.getLogger(PhotosResource.class);
 
