@@ -2,6 +2,7 @@ package biocode.fims.photos;
 
 import biocode.fims.records.GenericRecord;
 import biocode.fims.records.Record;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,11 +35,15 @@ public class PhotoRecord extends GenericRecord {
     }
 
     public boolean bulkLoad() {
-        return bulkLoadFile() != null;
+        return StringUtils.isNotBlank(bulkLoadFile());
     }
 
     public String bulkLoadFile() {
         return get(BULK_LOAD_FILE.uri());
+    }
+
+    public boolean hasError() {
+        return !get(PROCESSING_ERROR.uri()).equals("");
     }
 
     @Override

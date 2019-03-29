@@ -137,10 +137,10 @@ public class PhotoConverter implements DataConverter {
                     } catch (Exception exp) {
                         logger.debug("Failed to delete bulk loaded img file", exp);
                     }
-                } else if (Objects.equals(record.originalUrl(), existing.originalUrl())) {
-                    // if the originalUrl is the same copy a few existing props
+                } else if (Objects.equals(record.originalUrl(), existing.originalUrl()) && !existing.hasError()) {
+                    // if the originalUrl is the same and the existing photo was successfully processed, copy a few existing props
                     // TODO possibly need to persist more data?
-                    boolean newBulkLoad = !record.get(PhotoEntityProps.BULK_LOAD_FILE.uri()).equals("");
+                    boolean newBulkLoad = record.bulkLoad();
                     for (PhotoEntityProps p : PhotoEntityProps.values()) {
                         // don't overwrite the BULK_LOAD_FILE or PROCESSED if this is a new bulk load
                         if (newBulkLoad && (p.equals(PhotoEntityProps.BULK_LOAD_FILE) || p.equals(PhotoEntityProps.PROCESSED)))

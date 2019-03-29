@@ -204,6 +204,13 @@ public class PhotosResource extends FimsController {
             // if we are here, we've successfully received the entire file
             UploadResponse uploadResponse = photoLoader.process(photoPackage);
 
+            if (uploadEntry != null) {
+                try {
+                    uploadEntry.targetFile.delete();
+                } catch (Exception e) {
+                    // ignore error
+                }
+            }
             resumableUploads.remove(key);
             return uploadResponse;
         } catch (IOException e) {
