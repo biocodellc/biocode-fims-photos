@@ -87,8 +87,13 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         requiredValueRule.addColumn(PHOTO_ID.column());
 
         LinkedHashSet<String> columns = new LinkedHashSet<>(Arrays.asList(ORIGINAL_URL.column(), BULK_LOAD_FILE.column()));
-        RequiredValueInGroupRule requiredValueInGroupRule = new RequiredValueInGroupRule(columns, RuleLevel.ERROR);
+        RequiredValueInGroupRule requiredValueInGroupRule = new RequiredValueInGroupRule(columns, RuleLevel.WARNING);
         addRule(requiredValueInGroupRule);
+    }
+
+    @Override
+    public boolean canReload() {
+        return true;
     }
 
     @Override
