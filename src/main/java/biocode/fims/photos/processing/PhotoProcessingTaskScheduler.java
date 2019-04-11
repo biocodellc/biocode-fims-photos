@@ -65,7 +65,7 @@ public class PhotoProcessingTaskScheduler {
 
                             try {
                                 @SuppressWarnings("unchecked")
-                                Map<String, String> properties = JacksonUtil.fromString(data, HashMap.class);
+                                Map<String, Object> properties = JacksonUtil.fromString(data, HashMap.class);
                                 return new UnprocessedPhotoRecord(properties, parentEntity, e, n.getId(), projectId, expeditionCode);
                             } catch (Exception ex) {
                                 throw new SQLException(ex);

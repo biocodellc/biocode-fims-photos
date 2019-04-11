@@ -13,7 +13,6 @@ import biocode.fims.records.GenericRecord;
 import biocode.fims.records.Record;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.utils.FileUtils;
-import biocode.fims.utils.Flag;
 import biocode.fims.utils.StringGenerator;
 import com.opencsv.*;
 import org.slf4j.Logger;

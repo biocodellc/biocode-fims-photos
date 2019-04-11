@@ -4,7 +4,6 @@ import biocode.fims.records.GenericRecord;
 import biocode.fims.records.Record;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static biocode.fims.photos.PhotoEntityProps.*;
@@ -18,11 +17,11 @@ public class PhotoRecord extends GenericRecord {
         super();
     }
 
-    public PhotoRecord(Map<String, String> properties) {
+    public PhotoRecord(Map<String, Object> properties) {
         super(properties);
     }
 
-    private PhotoRecord(Map<String, String> properties, String rootIdentifier, int projectId, String expeditionCode, boolean shouldPersist) {
+    private PhotoRecord(Map<String, Object> properties, String rootIdentifier, int projectId, String expeditionCode, boolean shouldPersist) {
         super(properties, rootIdentifier, projectId, expeditionCode, shouldPersist);
     }
 
@@ -48,7 +47,7 @@ public class PhotoRecord extends GenericRecord {
 
     @Override
     public Record clone() {
-        return new PhotoRecord(new HashMap<>(properties), rootIdentifier(), projectId(), expeditionCode(), persist);
+        return new PhotoRecord(properties, rootIdentifier(), projectId(), expeditionCode(), persist);
     }
 }
 
