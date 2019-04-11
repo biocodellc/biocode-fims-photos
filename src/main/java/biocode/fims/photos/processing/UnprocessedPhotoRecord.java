@@ -14,7 +14,7 @@ public class UnprocessedPhotoRecord extends PhotoRecord {
     private final Entity entity;
     private final Entity parentEntity;
 
-    public UnprocessedPhotoRecord(Map<String, String> properties, Entity parentEntity, Entity entity, int networkId, int projectId, String expeditionCode) {
+    public UnprocessedPhotoRecord(Map<String, Object> properties, Entity parentEntity, Entity entity, int networkId, int projectId, String expeditionCode) {
         super(properties);
         this.parentEntity = parentEntity;
         this.entity = entity;

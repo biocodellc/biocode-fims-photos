@@ -14,7 +14,6 @@ import biocode.fims.photos.PhotoRecord;
 import biocode.fims.query.PostgresUtils;
 import biocode.fims.reader.DataConverter;
 import biocode.fims.repositories.RecordRepository;
-import biocode.fims.utils.RecordHasher;
 import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.slf4j.Logger;
