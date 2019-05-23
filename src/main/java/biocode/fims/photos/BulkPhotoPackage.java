@@ -302,7 +302,7 @@ public class BulkPhotoPackage {
                         do {
                             ze = stream.getNextEntry();
                         }
-                        while (ze.getName().startsWith(root));
+                        while (ze != null && ze.getName().startsWith(root));
 
                     } else {
                         ze = stream.getNextEntry();
