@@ -277,6 +277,7 @@ public class PhotosResource extends FimsController {
             this.projectId = projectId;
             this.expeditionCode = expeditionCode;
             this.targetFile = targetFile;
+            lastUpdated = ZonedDateTime.now(ZoneOffset.UTC);
         }
     }
 }
