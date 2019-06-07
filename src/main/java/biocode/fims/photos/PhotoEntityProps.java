@@ -8,6 +8,7 @@ import biocode.fims.config.models.EntityProps;
 public enum PhotoEntityProps implements EntityProps {
     PHOTO_ID("photoID"),
     ORIGINAL_URL("originalUrl"),
+    FILENAME("filename"),
     BULK_LOAD_FILE("bulkLoadFile"),
     PROCESSED("processed"),
     PROCESSING_ERROR("imageProcessingErrors"),

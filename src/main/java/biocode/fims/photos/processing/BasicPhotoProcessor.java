@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.imageio.ImageIO;
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.RedirectionException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ResponseProcessingException;
@@ -37,13 +39,21 @@ public class BasicPhotoProcessor implements PhotoProcessor {
     @Override
     public void process(UnprocessedPhotoRecord record) {
         try {
-            BufferedImage orig;
+            BufferedImage orig = null;
 
             if (record.bulkLoad()) {
                 orig = ImageIO.read(new File(record.bulkLoadFile()));
             } else {
-                orig = new FileRequest(client, record.originalUrl())
-                        .execute();
+                String url = record.originalUrl();
+                if (url != null && !url.startsWith("http")) url = "http://" + url;
+
+                while (orig == null) {
+                    try {
+                        orig = new FileRequest(client, url).execute();
+                    } catch (RedirectionException e) {
+                        url = e.getLocation().toString();
+                    }
+                }
             }
 
             ImageScaler scaler = new ImageScaler(orig);
@@ -71,13 +81,17 @@ public class BasicPhotoProcessor implements PhotoProcessor {
             record.set(PhotoEntityProps.IMG_1024.uri(), img_1024);
             record.set(PhotoEntityProps.PROCESSING_ERROR.uri(), null);
 
-        } catch (ResponseProcessingException | WebApplicationException e) {
+            if (!record.bulkLoad()) {
+                record.set(PhotoEntityProps.FILENAME.uri(), originalFile.substring(originalFile.lastIndexOf("/") + 1));
+            }
+
+        } catch (ProcessingException | WebApplicationException e) {
             record.set(
                     PhotoEntityProps.PROCESSING_ERROR.uri(),
                     "[\"Failed to fetch originalUrl for processing. Is the file accessible at \"" + record.originalUrl() + "\" and a valid image type?\"]"
             );
             throw e;
-        } catch (IOException e) {
+        } catch (Exception e) {
             String msg;
             if (record.bulkLoad()) {
                 msg = "[\"Failed to process photo from bulk load. Image may be corrupt\"]";

@@ -188,6 +188,7 @@ public class BulkPhotoPackage {
                 parentEntity.getUniqueKey(),
                 PhotoEntityProps.PHOTO_ID.uri(),
                 PhotoEntityProps.BULK_LOAD_FILE.uri(),
+                PhotoEntityProps.FILENAME.uri(),
                 Record.EXPEDITION_CODE
         });
 
@@ -204,6 +205,7 @@ public class BulkPhotoPackage {
                             parentIdentifier,
                             photoId,
                             f.getAbsolutePath(),
+                            entry.getKey(),
                             getExpeditionCode(parentIdentifier)
                     });
                 }
