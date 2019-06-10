@@ -108,8 +108,6 @@ public class PhotoConverter implements DataConverter {
         for (Record r : recordSet.recordsToPersist()) {
             PhotoRecord record = (PhotoRecord) r;
 
-            record.set(PhotoEntityProps.PROCESSED.uri(), "false");
-
             // generateId if necessary
             if (generateId && record.photoID().equals("")) {
                 String parentID = r.get(parentKey);
@@ -130,6 +128,8 @@ public class PhotoConverter implements DataConverter {
             if (existing != null) {
                 // delete bulk loaded file for existing record if it exists
                 if (existing.bulkLoad() && !existing.bulkLoadFile().equals(record.bulkLoadFile())) {
+                    // this happens if a file is bulk loaded again before the 1st has processed
+                    record.set(PhotoEntityProps.PROCESSED.uri(), "false");
                     try {
                         File img = new File(existing.bulkLoadFile());
                         img.delete();
@@ -144,9 +144,15 @@ public class PhotoConverter implements DataConverter {
                         // don't overwrite the BULK_LOAD_FILE or PROCESSED if this is a new bulk load
                         if (newBulkLoad && (p.equals(PhotoEntityProps.BULK_LOAD_FILE) || p.equals(PhotoEntityProps.PROCESSED)))
                             continue;
+                        // allow Filename to be changed
+                        if (p.equals(PhotoEntityProps.FILENAME)) continue;
                         record.set(p.uri(), existing.get(p.uri()));
                     }
+                } else if (record.bulkLoad() || !record.originalUrl().equals("")) {
+                    record.set(PhotoEntityProps.PROCESSED.uri(), "false");
                 }
+            } else {
+                record.set(PhotoEntityProps.PROCESSED.uri(), "false");
             }
 
         }
