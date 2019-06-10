@@ -40,6 +40,7 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         getAttribute(PROCESSED.column()).setInternal(true);
         getAttribute(PROCESSING_ERROR.column()).setInternal(true);
         getAttribute(BULK_LOAD_FILE.column()).setInternal(true);
+        getAttribute(FILENAME.column()).setInternal(true);
         getAttribute(IMG_128.column()).setInternal(true);
         getAttribute(IMG_512.column()).setInternal(true);
         getAttribute(IMG_1024.column()).setInternal(true);
@@ -86,9 +87,7 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
 
         requiredValueRule.addColumn(PHOTO_ID.column());
 
-        LinkedHashSet<String> columns = new LinkedHashSet<>(Arrays.asList(ORIGINAL_URL.column(), BULK_LOAD_FILE.column()));
-        RequiredValueInGroupRule requiredValueInGroupRule = new RequiredValueInGroupRule(columns, RuleLevel.WARNING);
-        addRule(requiredValueInGroupRule);
+        addRule(new PhotoFileRule());
     }
 
     @Override

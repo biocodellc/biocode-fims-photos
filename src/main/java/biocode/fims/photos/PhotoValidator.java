@@ -1,6 +1,7 @@
 package biocode.fims.photos;
 
 import biocode.fims.config.project.ProjectConfig;
+import biocode.fims.records.RecordSet;
 import biocode.fims.validation.RecordValidator;
 import biocode.fims.validation.ValidatorInstantiator;
 
@@ -11,6 +12,13 @@ public class PhotoValidator extends RecordValidator {
 
     public PhotoValidator(ProjectConfig config) {
         super(config);
+    }
+
+    @Override
+    public boolean validate(RecordSet recordSet) {
+        boolean isValid = super.validate(recordSet);
+
+        return isValid;
     }
 
     public static class PhotoValidatorInstantiator implements ValidatorInstantiator {
