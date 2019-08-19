@@ -10,6 +10,7 @@ import biocode.fims.reader.TabularDataReaderType;
 import biocode.fims.records.RecordMetadata;
 import biocode.fims.repositories.RecordRepository;
 import biocode.fims.rest.responses.UploadResponse;
+import biocode.fims.run.DatasetAction;
 import biocode.fims.run.DatasetAuthorizer;
 import biocode.fims.run.DatasetProcessor;
 import biocode.fims.run.ProcessorStatus;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static biocode.fims.fimsExceptions.errorCodes.DataReaderCode.NO_DATA;
@@ -36,17 +38,20 @@ public class BulkPhotoLoader {
     private final RecordRepository recordRepository;
     private final DataConverterFactory dataConverterFactory;
     private final DatasetAuthorizer datasetAuthorizer;
+    private final List<DatasetAction> datasetActions;
     private final FimsProperties props;
 
     @Autowired
     public BulkPhotoLoader(DataReaderFactory readerFactory, RecordValidatorFactory validatorFactory,
                            RecordRepository recordRepository, DataConverterFactory dataConverterFactory,
-                           DatasetAuthorizer datasetAuthorizer, FimsProperties props) {
+                           DatasetAuthorizer datasetAuthorizer, List<DatasetAction> datasetActions,
+                           FimsProperties props) {
         this.readerFactory = readerFactory;
         this.validatorFactory = validatorFactory;
         this.recordRepository = recordRepository;
         this.dataConverterFactory = dataConverterFactory;
         this.datasetAuthorizer = datasetAuthorizer;
+        this.datasetActions = datasetActions;
         this.props = props;
     }
 
@@ -66,6 +71,7 @@ public class BulkPhotoLoader {
                 .validatorFactory(validatorFactory)
                 .datasetAuthorizer(datasetAuthorizer)
                 .serverDataDir(props.serverRoot())
+                .datasetActions(datasetActions)
                 .uploadValid()
                 .addDataset(metadataFile.getAbsolutePath(), new RecordMetadata(TabularDataReaderType.READER_TYPE, false, metadata))
                 .build();
