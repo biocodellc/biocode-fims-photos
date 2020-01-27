@@ -6,44 +6,35 @@ import biocode.fims.authorizers.ProjectAuthorizer;
 import biocode.fims.config.models.Entity;
 import biocode.fims.config.models.PhotoEntity;
 import biocode.fims.config.project.ProjectConfig;
-import biocode.fims.fimsExceptions.*;
 import biocode.fims.fimsExceptions.BadRequestException;
+import biocode.fims.fimsExceptions.ForbiddenRequestException;
 import biocode.fims.models.Expedition;
 import biocode.fims.models.Project;
 import biocode.fims.models.User;
 import biocode.fims.photos.BulkPhotoLoader;
 import biocode.fims.photos.BulkPhotoPackage;
 import biocode.fims.repositories.RecordRepository;
-import biocode.fims.rest.FimsController;
-import biocode.fims.rest.responses.UploadResponse;
 import biocode.fims.rest.filters.Authenticated;
+import biocode.fims.rest.responses.UploadResponse;
 import biocode.fims.service.ExpeditionService;
 import biocode.fims.service.ProjectService;
-import biocode.fims.utils.FileUtils;
 import biocode.fims.utils.Flag;
-import biocode.fims.utils.StringGenerator;
 import biocode.fims.validation.messages.EntityMessages;
 import biocode.fims.validation.messages.Message;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.keyvalue.MultiKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.context.annotation.RequestScope;
 
 import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.*;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipInputStream;
 
@@ -53,7 +44,7 @@ import java.util.zip.ZipInputStream;
 @Controller
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
-public class PhotosResource extends FimsController {
+public class PhotosResource extends ResumableUploadResource {
     private final static Logger logger = LoggerFactory.getLogger(PhotosResource.class);
 
     private final ProjectService projectService;
@@ -63,23 +54,6 @@ public class PhotosResource extends FimsController {
     private final RecordRepository recordRepository;
     private final BulkPhotoLoader photoLoader;
 
-    public static enum UploadType {
-        NEW, RESUMABLE, RESUME;
-
-        // allows case-insensitive deserialization by jersey
-        public static UploadType fromString(String key) {
-            return key == null
-                    ? null
-                    : UploadType.valueOf(key.toUpperCase());
-        }
-
-    }
-
-    private static Map<MultiKey, UploadEntry> resumableUploads;
-
-    static {
-        resumableUploads = new ConcurrentHashMap<>();
-    }
 
     @Autowired
     public PhotosResource(FimsProperties props, ProjectService projectService, ExpeditionService expeditionService,
@@ -145,47 +119,18 @@ public class PhotosResource extends FimsController {
         // process file upload
 
         MultiKey key = getKey(user, projectId, expeditionCode, conceptAlias);
-
-        UploadEntry uploadEntry = null;
-        if (UploadType.RESUME.equals(uploadType)) {
-            uploadEntry = resumableUploads.get(key);
-
-            if (uploadEntry == null) {
-                throw new BadRequestException("Failed to resume upload. Please try again with a new upload.");
-            }
-        } else if (UploadType.RESUMABLE.equals(uploadType)) {
-            String tempDir = System.getProperty("java.io.tmpdir");
-            File targetFile = FileUtils.createUniqueFile(StringGenerator.generateString(20) + ".zip", tempDir);
-
-            uploadEntry = new UploadEntry(projectId, expeditionCode, targetFile);
-            uploadEntry.targetFile = targetFile;
-            uploadEntry.projectId = projectId;
-            uploadEntry.expeditionCode = expeditionCode;
-
-            resumableUploads.put(key, uploadEntry);
-        }
-
+        UploadEntry uploadEntry = getUploadEntry(key, uploadType);
 
         try {
             // resume or resumable upload
             if (uploadEntry != null) {
-                try (FileOutputStream fos = new FileOutputStream(uploadEntry.targetFile)) {
-                    byte[] buffer = new byte[8192];
-                    int size;
-                    while ((size = is.read(buffer, 0, buffer.length)) != -1) {
-                        fos.write(buffer, 0, size);
-                        uploadEntry.size += size;
-                        uploadEntry.lastUpdated = ZonedDateTime.now(ZoneOffset.UTC);
-                    }
+                try {
+                    is = resumeUpload(is, uploadEntry);
                 } catch (EOFException e) {
                     EntityMessages entityMessages = new EntityMessages(conceptAlias);
                     entityMessages.addErrorMessage("Incomplete Upload", new Message("Incomplete file upload"));
                     return new UploadResponse(false, entityMessages);
                 }
-
-                // close request InputStream and replace w/ FileInputStream
-                is.close();
-                is = new FileInputStream(uploadEntry.targetFile);
             }
 
             // process the bulk upload
@@ -246,38 +191,7 @@ public class PhotosResource extends FimsController {
         return uploadEntry;
     }
 
-    private void clearExpiredUploadEntries() {
-        List<MultiKey> keysToRemove = new ArrayList<>();
-
-        ZonedDateTime expiredTime = ZonedDateTime.now(ZoneOffset.UTC).minusHours(24);
-
-        for (Map.Entry<MultiKey, UploadEntry> e : resumableUploads.entrySet()) {
-            if (e.getValue().lastUpdated.isBefore(expiredTime)) {
-                keysToRemove.add(e.getKey());
-            }
-        }
-
-        keysToRemove.forEach(k -> resumableUploads.remove(k));
-    }
-
     private MultiKey getKey(User user, int projectId, String expeditionCode, String conceptAlias) {
         return new MultiKey(user.getUserId(), projectId, expeditionCode, conceptAlias);
-    }
-
-    @JsonIgnoreProperties({"projectId", "expeditionCode", "lastUpdated", "targetFile"})
-    private class UploadEntry {
-        @JsonProperty
-        int size;
-        int projectId;
-        String expeditionCode;
-        ZonedDateTime lastUpdated;
-        File targetFile;
-
-        UploadEntry(int projectId, String expeditionCode, File targetFile) {
-            this.projectId = projectId;
-            this.expeditionCode = expeditionCode;
-            this.targetFile = targetFile;
-            lastUpdated = ZonedDateTime.now(ZoneOffset.UTC);
-        }
     }
 }

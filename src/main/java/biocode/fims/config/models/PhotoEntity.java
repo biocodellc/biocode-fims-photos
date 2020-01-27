@@ -45,8 +45,6 @@ public class PhotoEntity extends PropEntity<PhotoEntityProps> {
         getAttribute(IMG_512.column()).setInternal(true);
         getAttribute(IMG_1024.column()).setInternal(true);
         recordType = PhotoRecord.class;
-
-        // note: default rules are set in the PhotoValidator
     }
 
     public boolean isGenerateID() {
